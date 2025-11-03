@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Bot, User } from "lucide-react";
+import { Send, Bot, User, BookHeart } from "lucide-react";
 import type { ChatMessage } from "@/lib/types";
 import {
   Card,
@@ -53,10 +53,10 @@ export function RecommendationChatbot({
 
   const cardDescription = isReady
     ? "Chat with our AI to refine your book recommendations."
-    : "Please add a book and get recommendations to start chatting.";
+    : "Go to the 'Library' and 'Preferences' tabs to start chatting.";
 
   return (
-    <Card className="h-full flex flex-col min-h-[70vh]">
+    <Card className="h-full flex flex-col min-h-[70vh] mt-4">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 font-headline">
           <Bot className="size-6" /> Recommendation Chatbot
@@ -95,8 +95,8 @@ export function RecommendationChatbot({
                   {message.recommendations && (
                     <Card className="mt-3 bg-background/70">
                       <CardHeader className="p-3">
-                        <CardTitle className="text-base font-headline">
-                          Recommendations
+                        <CardTitle className="text-base font-headline flex items-center gap-2">
+                           <BookHeart /> Recommendations
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="p-3 pt-0">
@@ -141,6 +141,7 @@ export function RecommendationChatbot({
             onChange={(e) => setInput(e.target.value)}
             placeholder="Tell me more about what you like..."
             disabled={!isReady || isLoading}
+            suppressHydrationWarning
           />
           <Button
             type="submit"

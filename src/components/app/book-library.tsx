@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { Plus, Book } from "lucide-react";
+import { Plus, Book as BookIcon } from "lucide-react";
 import type { Book as BookType } from "@/lib/types";
 import {
   Card,
@@ -54,13 +54,13 @@ export function BookLibrary({ books, onAddBook }: BookLibraryProps) {
   }
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden mt-4">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 font-headline">
-          <Book className="size-6" /> Your Book Library
+          <BookIcon className="size-6" /> Your Book Library
         </CardTitle>
         <CardDescription>
-          Add books to be used for recommendations.
+          Add books to your reading history to get better recommendations. The more books you add, the smarter the AI becomes.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -73,7 +73,7 @@ export function BookLibrary({ books, onAddBook }: BookLibraryProps) {
                 <FormItem>
                   <FormLabel>Title</FormLabel>
                   <FormControl>
-                    <Input placeholder="The Great Gatsby" {...field} />
+                    <Input placeholder="The Great Gatsby" {...field} suppressHydrationWarning />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -86,7 +86,7 @@ export function BookLibrary({ books, onAddBook }: BookLibraryProps) {
                 <FormItem>
                   <FormLabel>Author</FormLabel>
                   <FormControl>
-                    <Input placeholder="F. Scott Fitzgerald" {...field} />
+                    <Input placeholder="F. Scott Fitzgerald" {...field} suppressHydrationWarning />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -110,7 +110,7 @@ export function BookLibrary({ books, onAddBook }: BookLibraryProps) {
               )}
             />
             <Button type="submit" className="w-full">
-              <Plus className="mr-2 size-4" /> Add Book
+              <Plus className="mr-2 size-4" /> Add Book & Continue
             </Button>
           </form>
         </Form>

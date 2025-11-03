@@ -31,7 +31,7 @@ export function PreferenceTool({
   };
 
   return (
-    <Card>
+    <Card className="mt-4">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 font-headline">
           <Sparkles className="size-6" /> AI Recommendations
@@ -53,7 +53,7 @@ export function PreferenceTool({
             className="w-full"
             disabled={isLoading || !preferences.trim()}
           >
-            {isLoading ? "Generating..." : "Get Initial Recommendations"}
+            {isLoading ? "Generating..." : "Get Recommendations & Chat"}
           </Button>
         </form>
       </CardContent>

@@ -9,6 +9,13 @@ import { Header } from "@/components/app/header";
 import { generateBookRecommendations } from "@/ai/flows/generate-book-recommendations";
 import { refineRecommendationsViaChatbot } from "@/ai/flows/refine-recommendations-via-chatbot";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import { Book, Bot, Sparkles } from "lucide-react";
 
 export default function Home() {
   const [books, setBooks] = useState<Book[]>([]);
@@ -17,6 +24,7 @@ export default function Home() {
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isChatting, setIsChatting] = useState(false);
+  const [activeTab, setActiveTab] = useState("library");
 
   const { toast } = useToast();
 
@@ -26,6 +34,7 @@ export default function Home() {
       title: "Book Added",
       description: `"${book.title}" has been added to your library.`,
     });
+    setActiveTab("preferences");
   };
 
   const handleGenerateRecommendations = async (preferences: string) => {
@@ -36,14 +45,16 @@ export default function Home() {
     try {
       const result = await generateBookRecommendations({ preferences });
       setInitialRecommendations(result.recommendations);
-       setChatHistory([
+      setChatHistory([
         {
           id: Date.now(),
-          role: 'assistant',
-          content: "I've generated some initial recommendations for you. Feel free to ask me to refine them!",
+          role: "assistant",
+          content:
+            "I've generated some initial recommendations for you. Feel free to ask me to refine them!",
           recommendations: result.recommendations,
-        }
+        },
       ]);
+      setActiveTab("chatbot");
     } catch (error) {
       console.error(error);
       toast({
@@ -67,7 +78,8 @@ export default function Home() {
     try {
       const bookDetails = books
         .map(
-          (b) => `Title: ${b.title}, Author: ${b.author}, Description: ${b.description}`
+          (b) =>
+            `Title: ${b.title}, Author: ${b.author}, Description: ${b.description}`
         )
         .join("\n\n");
       const formattedChatHistory = newHistory
@@ -110,23 +122,43 @@ export default function Home() {
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       <Header />
       <main className="flex-grow container mx-auto p-4 md:p-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-          <div className="lg:col-span-1 flex flex-col gap-8">
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="w-full"
+        >
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="library">
+              <Book className="mr-2" /> Library
+            </TabsTrigger>
+            <TabsTrigger value="preferences" disabled={books.length === 0}>
+              <Sparkles className="mr-2" /> Preferences
+            </TabsTrigger>
+            <TabsTrigger
+              value="chatbot"
+              disabled={books.length === 0 || userPreferences === ""}
+            >
+              <Bot className="mr-2" /> Chatbot
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="library">
             <BookLibrary books={books} onAddBook={handleAddBook} />
+          </TabsContent>
+          <TabsContent value="preferences">
             <PreferenceTool
               onGenerateRecommendations={handleGenerateRecommendations}
               isLoading={isGenerating}
             />
-          </div>
-          <div className="lg:col-span-2">
+          </TabsContent>
+          <TabsContent value="chatbot">
             <RecommendationChatbot
               chatHistory={chatHistory}
               onSendMessage={handleSendMessage}
               isLoading={isChatting}
               isReady={books.length > 0 && userPreferences !== ""}
             />
-          </div>
-        </div>
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
