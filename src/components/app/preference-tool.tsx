@@ -81,13 +81,13 @@ export function PreferenceTool({
                  </div>
             </div>
         ) : summarizedPreferences && summarizedPreferences.summary && (
-          <div className="space-y-4 rounded-lg border-2 border-accent/30 bg-accent/10 p-6 shadow-inner">
-            <p className="font-semibold text-center italic text-accent-foreground/90">
+          <div className="space-y-4 rounded-lg border-2 border-muted/30 bg-muted/10 p-6 shadow-inner">
+            <p className="font-semibold text-center italic text-foreground/90">
               &quot;{summarizedPreferences.summary}&quot;
             </p>
             <div className="space-y-3 pt-3">
               <div>
-                <h4 className="font-headline flex items-center gap-2 mb-2 text-sm uppercase tracking-wider text-accent-foreground/70"><BookCheck /> Preferred Genres</h4>
+                <h4 className="font-headline flex items-center gap-2 mb-2 text-sm uppercase tracking-wider text-muted-foreground/70"><BookCheck /> Preferred Genres</h4>
                 <div className="flex flex-wrap gap-2">
                   {summarizedPreferences.genres.map((genre) => (
                     <Badge key={genre} variant="outline" className="border-accent text-accent-foreground bg-transparent text-sm">
@@ -97,7 +97,7 @@ export function PreferenceTool({
                 </div>
               </div>
                <div>
-                <h4 className="font-headline flex items-center gap-2 mb-2 text-sm uppercase tracking-wider text-accent-foreground/70"><Tags /> Common Themes</h4>
+                <h4 className="font-headline flex items-center gap-2 mb-2 text-sm uppercase tracking-wider text-muted-foreground/70"><Tags /> Common Themes</h4>
                 <div className="flex flex-wrap gap-2">
                   {summarizedPreferences.themes.map((theme) => (
                      <Badge key={theme} variant="outline" className="border-accent text-accent-foreground bg-transparent text-sm">
