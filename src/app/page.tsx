@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useMemo, useEffect } from "react";
+import { useMemo, useEffect, useState } from "react";
 import { useFirebase, useCollection, useMemoFirebase } from "@/firebase";
 import { useRouter }from "next/navigation";
 import { collection, query, where, limit, orderBy } from "firebase/firestore";
@@ -10,10 +10,14 @@ import Link from "next/link";
 import { Loader2, ArrowRight } from "lucide-react";
 import { BookListCard } from "@/components/app/book-list-card";
 import { BookCard } from "@/components/app/book-card";
-import type { BookWithListContext } from "@/lib/types";
+import type { Book, BookWithListContext } from "@/lib/types";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { Card, CardContent, CardHeader } from "../components/ui/card";
-import { Clover } from "lucide-react";
+import { Clover, Sparkles } from "lucide-react";
+import { summarizeLibrary } from "@/ai/flows/summarize-library";
+import { generateBookRecommendations } from "@/ai/flows/generate-book-recommendations";
+import { searchBooks } from "@/ai/flows/search-books";
+
 
 function SectionLoadingSkeleton({ count = 4 }: { count?: number }) {
     return (
@@ -56,6 +60,8 @@ export default function HomePage() {
     const { firestore, user, isUserLoading } = useFirebase();
     const router = useRouter();
     const [recentlyViewedIds] = useLocalStorage<string[]>('recentlyViewedBookLists', []);
+    const [recommendedBooks, setRecommendedBooks] = useState<Book[]>([]);
+    const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(true);
 
     useEffect(() => {
         if (!isUserLoading && !user) {
@@ -87,26 +93,62 @@ export default function HomePage() {
     }, [myPrivateLists, myPublicLists]);
     
     const isLoadingMyLists = isLoadingMyPrivate || isLoadingMyPublic;
+    
+    useEffect(() => {
+        const getRecommendations = async () => {
+            if (isLoadingMyLists || !user) return;
+            setIsLoadingRecommendations(true);
+            
+            const allMyBooks = (myPrivateLists || []).concat(myPublicLists || []).flatMap(list => list.books || []);
 
-    const recommendedBooks = useMemo((): BookWithListContext[] => {
-        if (!publicLists) return [];
-        
-        const books: BookWithListContext[] = [];
-        const uniqueBooks = new Set<string>(); // "title|author"
-        
-        for (const list of publicLists) {
-            if (list.books) {
-                for (const book of list.books) {
-                     const uniqueKey = `${book.title}|${book.author}`;
-                     if (!uniqueBooks.has(uniqueKey)) {
-                         uniqueBooks.add(uniqueKey);
-                         books.push({ ...book, listId: list.id, listName: list.name });
-                     }
+            if (allMyBooks.length > 0) {
+                 const libraryContent = allMyBooks.map(b => `${b.title} by ${b.author}`).join('\n');
+                 const prefs = await summarizeLibrary({ books: libraryContent });
+                 const preferencesText = `Genres: ${prefs.genres.join(', ')}. Themes: ${prefs.themes.join(', ')}. Summary: ${prefs.summary}`;
+
+                 const recommendationsResult = await generateBookRecommendations({ preferences: preferencesText });
+
+                // The output is a single string, we need to parse it and get full book details
+                const parsedTitles = recommendationsResult.recommendations.split('\n\n')
+                    .map(rec => rec.match(/\*\*Title:\*\*\s*(.*)/)?.[1].trim())
+                    .filter(Boolean);
+
+                if (parsedTitles.length > 0) {
+                     const searchPromises = parsedTitles.map(title => searchBooks({ query: `title:"${title}"` }));
+                     const searchResults = await Promise.all(searchPromises);
+                     const booksWithDetails = searchResults.map(res => res.books?.[0]).filter(Boolean);
+                     setRecommendedBooks(booksWithDetails.map((b, i) => ({...b, id: i})));
+                } else {
+                    setRecommendedBooks([]);
+                }
+
+            } else {
+                // Fallback for new users: show some popular books
+                if (publicLists) {
+                     const books: BookWithListContext[] = [];
+                    const uniqueBooks = new Set<string>(); // "title|author"
+                    
+                    for (const list of publicLists) {
+                        if (list.books) {
+                            for (const book of list.books) {
+                                const uniqueKey = `${book.title}|${book.author}`;
+                                if (!uniqueBooks.has(uniqueKey)) {
+                                    uniqueBooks.add(uniqueKey);
+                                    books.push({ ...book, listId: list.id, listName: list.name });
+                                }
+                            }
+                        }
+                    }
+                    setRecommendedBooks(books.slice(0, 6).map((b,i) => ({...b, id: i})));
                 }
             }
-        }
-        return books.slice(0, 12);
-    }, [publicLists]);
+            setIsLoadingRecommendations(false);
+        };
+
+        getRecommendations();
+
+    }, [myPublicLists, myPrivateLists, isLoadingMyLists, user, publicLists]);
+
 
     const recentlyViewedLists = useMemo(() => {
         if (!publicLists || recentlyViewedIds.length === 0) return [];
@@ -123,6 +165,8 @@ export default function HomePage() {
         );
     }
     
+    const hasPersonalRecommendations = recommendedBooks.length > 0 && myLists.length > 0;
+
     return (
         <div className="flex flex-col min-h-screen bg-background text-foreground">
             <main className="flex-grow container mx-auto p-4 md:p-8 space-y-12 md:space-y-16">
@@ -135,13 +179,19 @@ export default function HomePage() {
                 </header>
                 <section>
                     <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-2xl md:text-3xl font-headline">Recommended Books</h2>
-                        {/* <Button variant="link">View All <ArrowRight className="ml-2"/></Button> */}
+                        <h2 className="text-2xl md:text-3xl font-headline flex items-center gap-2">
+                           <Sparkles /> {hasPersonalRecommendations ? "Recommended For You" : "Featured Books"}
+                        </h2>
+                         <Button variant="link" asChild>
+                            <Link href="/recommendations">
+                                Get New Recommendations <ArrowRight className="ml-2"/>
+                            </Link>
+                        </Button>
                     </div>
-                    {isLoadingPublic ? <BookSectionLoadingSkeleton /> : (
+                    {isLoadingRecommendations ? <BookSectionLoadingSkeleton /> : (
                          recommendedBooks && recommendedBooks.length > 0 ? (
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6">
-                                {recommendedBooks.map(book => <BookCard key={book.title + book.author} book={book} />)}
+                                {recommendedBooks.map((book, i) => <BookCard key={i} book={{...book, listId: 'recommendation', listName: 'Recommendation'}} />)}
                             </div>
                         ) : <p className="text-muted-foreground">No recommended books available right now.</p>
                     )}
@@ -186,3 +236,5 @@ export default function HomePage() {
         </div>
     );
 }
+
+    
