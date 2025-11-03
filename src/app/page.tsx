@@ -16,7 +16,10 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { Book as BookIcon, Bot, Sparkles } from "lucide-react";
+import { Book as BookIcon, Bot, Sparkles, Loader2 } from "lucide-react";
+import { useFirebase } from "@/firebase";
+import { useRouter } from "next/navigation";
+
 
 export default function Home() {
   const [books, setBooks] = useState<Book[]>([]);
@@ -30,6 +33,14 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState("library");
 
   const { toast } = useToast();
+  const { user, isUserLoading } = useFirebase();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push('/welcome');
+    }
+  }, [user, isUserLoading, router]);
   
   const handleRefreshPreferences = async () => {
     if (books.length === 0) {
@@ -216,6 +227,17 @@ export default function Home() {
         description: "Add at least one book to continue.",
       });
     }
+  }
+
+  if (isUserLoading || !user) {
+    return (
+      <div className="flex flex-col min-h-screen bg-background text-foreground">
+        <Header />
+        <main className="flex-grow container mx-auto p-4 md:p-8 flex justify-center items-center">
+          <Loader2 className="animate-spin size-12 text-accent" />
+        </main>
+      </div>
+    );
   }
 
   return (

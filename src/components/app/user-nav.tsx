@@ -17,9 +17,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogIn, LogOut, User as UserIcon, Loader2 } from 'lucide-react';
+import { LogIn, LogOut, User as UserIcon, Loader2, PlusCircle } from 'lucide-react';
 import { doc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import Link from 'next/link';
 
 export function UserNav() {
   const { auth, firestore, user, isUserLoading } = useFirebase();
@@ -98,9 +99,15 @@ export function UserNav() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
+          <Link href={`/profile/${user.uid}`} passHref>
+            <DropdownMenuItem>
+              <UserIcon className="mr-2" />
+              <span>Profile</span>
+            </DropdownMenuItem>
+          </Link>
           <DropdownMenuItem>
-            <UserIcon className="mr-2" />
-            <span>Profile</span>
+            <PlusCircle className="mr-2" />
+            <span>Create new list</span>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
