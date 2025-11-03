@@ -1,4 +1,4 @@
-'use client';
+
 
 import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
@@ -7,6 +7,10 @@ import { getFirestore } from 'firebase/firestore'
 
 // IMPORTANT: DO NOT MODIFY THIS FUNCTION
 export function initializeFirebase() {
+  if (typeof window === 'undefined') {
+    throw new Error("Firebase should only be initialized on the client side.");
+  }
+  
   if (getApps().length) {
     // If already initialized, return the SDKs with the already initialized App
     return getSdks(getApp());
