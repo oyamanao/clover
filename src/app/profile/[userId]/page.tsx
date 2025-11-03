@@ -7,8 +7,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Header } from '@/components/app/header';
 import { Loader2, User as UserIcon, Book, PlusCircle } from 'lucide-react';
 import { doc, collection, query, where } from 'firebase/firestore';
-import { useDoc, useCollection } from '@/firebase/firestore/use-collection';
+import { useDoc, useCollection } from '@/firebase';
 import { useMemo } from 'react';
+import Link from 'next/link';
 
 // FAKE DATA FOR NOW
 const fakeBookLists = [
@@ -70,9 +71,11 @@ export default function ProfilePage({ params }: { params: { userId: string } }) 
         <div className="flex justify-between items-center mb-6">
             <h2 className="text-3xl font-headline">Book Lists</h2>
             {isOwnProfile && (
-                <Button>
-                    <PlusCircle className="mr-2" /> Create New List
-                </Button>
+                <Link href="/book-lists/new" passHref>
+                    <Button>
+                        <PlusCircle className="mr-2" /> Create New List
+                    </Button>
+                </Link>
             )}
         </div>
         
