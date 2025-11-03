@@ -39,6 +39,8 @@ export default function ProfilePage({ params: paramsPromise }: { params: Promise
     return [...(privateLists || []), ...(publicLists || [])];
   }, [privateLists, publicLists]);
   
+  const isLoading = isUserLoading || isProfileLoading;
+  
   // Loading is true if we are still waiting for public lists OR if we are supposed to be loading private lists but haven't finished.
   const isLoadingLists = isLoadingPublic || (currentUser?.uid === userId && isLoadingPrivate);
   
@@ -46,7 +48,7 @@ export default function ProfilePage({ params: paramsPromise }: { params: Promise
     return currentUser?.uid === userId;
   }, [currentUser, userId]);
 
-  if (isUserLoading || (isProfileLoading && !profileUser)) {
+  if (isLoading) {
     return (
         <div className="flex h-screen w-full items-center justify-center bg-background">
             <Loader2 className="animate-spin text-accent size-12" />
@@ -147,6 +149,11 @@ export default function ProfilePage({ params: paramsPromise }: { params: Promise
                         <Link href="/book-lists/new">Create one now</Link>
                     </Button>
                 )}
+                 {!currentUser && !isOwnProfile && (
+                   <div className="mt-4">
+                     <p className="text-muted-foreground">Sign in to create your own book lists!</p>
+                   </div>
+                 )}
             </div>
         )}
       </main>
