@@ -3,6 +3,7 @@ export interface Book {
   title: string;
   author: string;
   description: string;
+  imageUrl: string;
 }
 
 export interface ChatMessage {
@@ -16,4 +17,5 @@ export interface BookSearchResult {
   title: string;
   author: string;
   description: string;
+  imageUrl: string;
 }

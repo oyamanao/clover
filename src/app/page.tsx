@@ -50,10 +50,9 @@ export default function Home() {
       setSummarizedPreferences(result);
 
       toast({
-        title: "Preferences Refreshed",
+        title: "Preferences Updated",
         description: "We've analyzed your library and updated your preferences.",
       });
-      setActiveTab("preferences");
     } catch (error) {
        console.error(error);
       toast({
@@ -74,7 +73,7 @@ export default function Home() {
       setSummarizedPreferences(null);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [books.length]);
+  }, [books]);
 
 
   const handleAddBook = (book: Omit<Book, "id">) => {

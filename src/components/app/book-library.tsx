@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Plus, Book as BookIcon, Search, Loader2, Trash2, XCircle, ArrowRight } from "lucide-react";
 import type { Book as BookType, BookSearchResult } from "@/lib/types";
 import {
@@ -103,27 +104,37 @@ export function BookLibrary({ books, onAddBook, onRemoveBook, onClearLibrary, on
                   {searchResults.map((book) => (
                     <div
                       key={book.title + book.author}
-                      className="p-3 border rounded-md bg-muted/50 flex items-center justify-between gap-2"
+                      className="p-3 border rounded-md bg-muted/50 flex items-start gap-4"
                     >
+                      <Image 
+                        src={book.imageUrl} 
+                        alt={`Cover of ${book.title}`}
+                        width={64}
+                        height={96}
+                        className="rounded-md object-cover"
+                        unoptimized
+                      />
                       <div className="flex-grow">
                         <p className="font-semibold">{book.title}</p>
                         <p className="text-sm text-muted-foreground">
                           by {book.author}
                         </p>
+                         <Button
+                          size="sm"
+                          onClick={() =>
+                            onAddBook({
+                              title: book.title,
+                              author: book.author,
+                              description: book.description,
+                              imageUrl: book.imageUrl
+                            })
+                          }
+                          className="mt-2"
+                          suppressHydrationWarning
+                        >
+                          <Plus className="mr-2" /> Add
+                        </Button>
                       </div>
-                      <Button
-                        size="sm"
-                        onClick={() =>
-                          onAddBook({
-                            title: book.title,
-                            author: book.author,
-                            description: book.description,
-                          })
-                        }
-                        suppressHydrationWarning
-                      >
-                        <Plus className="mr-2" /> Add
-                      </Button>
                     </div>
                   ))}
                 </div>
@@ -167,9 +178,19 @@ export function BookLibrary({ books, onAddBook, onRemoveBook, onClearLibrary, on
                     key={book.id}
                     className="p-3 border rounded-md bg-accent/20 text-sm flex justify-between items-center"
                   >
-                    <div>
-                      <p className="font-semibold">{book.title}</p>
-                      <p className="text-muted-foreground">by {book.author}</p>
+                    <div className="flex items-center gap-3">
+                       <Image 
+                        src={book.imageUrl} 
+                        alt={`Cover of ${book.title}`}
+                        width={40}
+                        height={60}
+                        className="rounded object-cover"
+                        unoptimized
+                      />
+                      <div>
+                        <p className="font-semibold">{book.title}</p>
+                        <p className="text-muted-foreground">by {book.author}</p>
+                      </div>
                     </div>
                     <Button
                       variant="ghost"

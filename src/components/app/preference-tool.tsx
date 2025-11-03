@@ -35,14 +35,8 @@ export function PreferenceTool({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Use the AI summary as a base if the user hasn't typed anything
-    const prefsToGenerate = preferences.trim() 
-      ? preferences
-      : summarizedPreferences?.summary || "";
-    
-    if (prefsToGenerate) {
-      onGenerateRecommendations(prefsToGenerate);
-    }
+    const prefsToGenerate = preferences.trim();
+    onGenerateRecommendations(prefsToGenerate);
   };
 
   return (
@@ -91,20 +85,20 @@ export function PreferenceTool({
             </p>
             <div className="space-y-3 pt-3">
               <div>
-                <h4 className="font-headline flex items-center gap-2 mb-2 text-sm uppercase tracking-wider text-muted-foreground"><BookCheck /> Preferred Genres</h4>
+                <h4 className="font-headline flex items-center gap-2 mb-2 text-sm uppercase tracking-wider text-accent-foreground/70"><BookCheck /> Preferred Genres</h4>
                 <div className="flex flex-wrap gap-2">
                   {summarizedPreferences.genres.map((genre) => (
-                    <Badge key={genre} variant="outline" className="border-accent text-accent-foreground bg-accent/20 text-sm">
+                    <Badge key={genre} variant="outline" className="border-accent text-accent-foreground bg-transparent text-sm">
                       {genre}
                     </Badge>
                   ))}
                 </div>
               </div>
                <div>
-                <h4 className="font-headline flex items-center gap-2 mb-2 text-sm uppercase tracking-wider text-muted-foreground"><Tags /> Common Themes</h4>
+                <h4 className="font-headline flex items-center gap-2 mb-2 text-sm uppercase tracking-wider text-accent-foreground/70"><Tags /> Common Themes</h4>
                 <div className="flex flex-wrap gap-2">
                   {summarizedPreferences.themes.map((theme) => (
-                     <Badge key={theme} variant="outline" className="border-accent text-accent-foreground bg-accent/20 text-sm">
+                     <Badge key={theme} variant="outline" className="border-accent text-accent-foreground bg-transparent text-sm">
                       {theme}
                     </Badge>
                   ))}

@@ -23,6 +23,7 @@ const BookSearchResultSchema = z.object({
     title: z.string().describe('The title of the book.'),
     author: z.string().describe('The author of the book.'),
     description: z.string().describe('A brief description of the book.'),
+    imageUrl: z.string().url().describe('A URL for the book cover image.'),
 });
 
 const SearchBooksOutputSchema = z.object({
@@ -40,7 +41,7 @@ const prompt = ai.definePrompt({
   name: 'searchBooksPrompt',
   input: { schema: SearchBooksInputSchema },
   output: { schema: SearchBooksOutputSchema },
-  prompt: `You are a powerful book search engine. A user will provide a search query, and you will return a list of books that match the query. Provide a title, author, and a short (1-2 sentence) description for each book. Only return real books.
+  prompt: `You are a powerful book search engine. A user will provide a search query, and you will return a list of books that match the query. Provide a title, author, a short (1-2 sentence) description, and a book cover image URL for each book. Only return real books. Prioritize books from a wide range of cultures, including Indian literature.
 
 User Query: {{{query}}}
 
