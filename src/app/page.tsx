@@ -59,7 +59,7 @@ function BookSectionLoadingSkeleton({ count = 6 }: { count?: number }) {
 export default function HomePage() {
     const { firestore, user, isUserLoading } = useFirebase();
     const router = useRouter();
-    const [recentlyViewedIds] = useLocalStorage<string[]>('recentlyViewedBookLists', []);
+    const [recentlyViewedIds, setRecentlyViewedIds] = useLocalStorage<string[]>('recentlyViewedBookLists', []);
     const [recommendedBooks, setRecommendedBooks] = useState<Book[]>([]);
     const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(true);
 
@@ -156,6 +156,11 @@ export default function HomePage() {
         const listMap = new Map(publicLists.map(list => [list.id, list]));
         return recentlyViewedIds.map(id => listMap.get(id)).filter(Boolean).slice(0, 4);
     }, [publicLists, recentlyViewedIds]);
+    
+    const handleRemoveFromRecentlyViewed = (listId: string) => {
+        setRecentlyViewedIds(prev => prev.filter(id => id !== listId));
+    };
+
 
     if (isUserLoading || !user) {
         return (
@@ -202,8 +207,8 @@ export default function HomePage() {
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-2xl md:text-3xl font-headline">Recently Viewed</h2>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap_6">
-                            {recentlyViewedLists.map(list => list && <BookListCard key={list.id} list={list} />)}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                            {recentlyViewedLists.map(list => list && <BookListCard key={list.id} list={list} showDelete onRemove={handleRemoveFromRecentlyViewed} />)}
                         </div>
                     </section>
                 )}
@@ -236,5 +241,7 @@ export default function HomePage() {
         </div>
     );
 }
+
+    
 
     
