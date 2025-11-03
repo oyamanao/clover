@@ -183,18 +183,18 @@ export default function BookListPage({ params: paramsPromise }: { params: Promis
 
                         <div className="flex justify-between items-end pt-4">
                             {finalListData.userId && (
-                                <Link href={`/profile/${finalListData.userId}`} className="flex items-center gap-3 group">
-                                    <Avatar className="h-10 w-10 border-2 border-transparent group-hover:border-accent transition-colors">
+                                <div className="flex items-center gap-3">
+                                    <Avatar className="h-10 w-10 border-2 border-transparent">
                                         <AvatarImage src={ownerPhoto} alt={ownerName} />
                                         <AvatarFallback>
                                             {ownerName ? ownerName.charAt(0) : <UserIcon />}
                                         </AvatarFallback>
                                     </Avatar>
                                     <div>
-                                        <p className="font-semibold group-hover:text-accent transition-colors">{ownerName}</p>
+                                        <p className="font-semibold">{ownerName}</p>
                                         <p className="text-xs text-muted-foreground">{finalListData.isPublic ? 'Public List' : 'Private List'}</p>
                                     </div>
-                                </Link>
+                                </div>
                             )}
                              <div className="flex items-center gap-4 text-muted-foreground">
                                 <div className="flex items-center gap-1">
