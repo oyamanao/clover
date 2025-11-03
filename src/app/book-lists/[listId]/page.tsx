@@ -61,7 +61,6 @@ export default function BookListPage({ params: paramsPromise }: { params: Promis
     
     const [finalListData, setFinalListData] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [listOwner, setListOwner] = useState<any>(null);
 
      useEffect(() => {
         const loadData = async () => {
@@ -85,31 +84,6 @@ export default function BookListPage({ params: paramsPromise }: { params: Promis
 
             if (dataToShow) {
                 setFinalListData(dataToShow);
-                // Fetch owner data
-                if (firestore && dataToShow.userId) {
-                    const ownerRef = doc(firestore, 'users', dataToShow.userId);
-                    try {
-                        const ownerSnap = await getDoc(ownerRef);
-                        if (ownerSnap.exists()) {
-                            setListOwner(ownerSnap.data());
-                        } else {
-                             // Fallback for owner data
-                            if (dataToShow.userName) {
-                                setListOwner({
-                                    uid: dataToShow.userId,
-                                    displayName: dataToShow.userName,
-                                    photoURL: null
-                                });
-                            }
-                        }
-                    } catch (e) {
-                         const permissionError = new FirestorePermissionError({
-                            path: ownerRef.path,
-                            operation: 'get',
-                        });
-                        errorEmitter.emit('permission-error', permissionError);
-                    }
-                }
             }
             // Only set loading to false when both have finished
             if (!isLoadingPublic && !isLoadingPrivate) {
@@ -118,7 +92,7 @@ export default function BookListPage({ params: paramsPromise }: { params: Promis
         };
 
         loadData();
-    }, [listData, privateListData, isLoadingPublic, isLoadingPrivate, publicError, firestore, listId]);
+    }, [listData, privateListData, isLoadingPublic, isLoadingPrivate, publicError, listId]);
     
     const isOwner = user && finalListData && user.uid === finalListData.userId;
 
@@ -183,6 +157,9 @@ export default function BookListPage({ params: paramsPromise }: { params: Promis
             </div>
         );
     }
+    
+    const ownerName = finalListData.userName || 'Unknown User';
+    const ownerPhoto = finalListData.userPhotoURL || undefined;
 
     return (
         <div className="flex flex-col min-h-screen bg-background text-foreground">
@@ -194,16 +171,16 @@ export default function BookListPage({ params: paramsPromise }: { params: Promis
                         <CardDescription className="pt-2">{finalListData.description}</CardDescription>
 
                         <div className="flex justify-between items-end pt-4">
-                            {listOwner && (
-                                <Link href={`/profile/${listOwner.uid}`} className="flex items-center gap-3 group">
+                            {finalListData.userId && (
+                                <Link href={`/profile/${finalListData.userId}`} className="flex items-center gap-3 group">
                                     <Avatar className="h-10 w-10 border-2 border-transparent group-hover:border-accent transition-colors">
-                                        <AvatarImage src={listOwner.photoURL || undefined} alt={listOwner.displayName || 'User'} />
+                                        <AvatarImage src={ownerPhoto} alt={ownerName} />
                                         <AvatarFallback>
-                                            {listOwner.displayName ? listOwner.displayName.charAt(0) : <UserIcon />}
+                                            {ownerName ? ownerName.charAt(0) : <UserIcon />}
                                         </AvatarFallback>
                                     </Avatar>
                                     <div>
-                                        <p className="font-semibold group-hover:text-accent transition-colors">{listOwner.displayName}</p>
+                                        <p className="font-semibold group-hover:text-accent transition-colors">{ownerName}</p>
                                         <p className="text-xs text-muted-foreground">{finalListData.isPublic ? 'Public List' : 'Private List'}</p>
                                     </div>
                                 </Link>
@@ -254,5 +231,3 @@ export default function BookListPage({ params: paramsPromise }: { params: Promis
         </div>
     );
 }
-
-    

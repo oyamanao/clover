@@ -90,6 +90,7 @@ export default function NewBookListPage() {
       isPublic,
       userId: user.uid,
       userName: user.displayName,
+      userPhotoURL: user.photoURL,
       books: books.map(({ id, ...rest }) => rest), // Remove temp id
       createdAt: serverTimestamp(),
       likes: 0,
