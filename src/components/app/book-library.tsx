@@ -111,7 +111,7 @@ export function BookLibrary({ books, onAddBook, onRemoveBook, onClearLibrary, on
                         alt={`Cover of ${book.title}`}
                         width={64}
                         height={96}
-                        className="rounded-md object-cover"
+                        className="rounded-md"
                       />
                       <div className="flex-grow">
                         <p className="font-semibold">{book.title}</p>
@@ -182,7 +182,7 @@ export function BookLibrary({ books, onAddBook, onRemoveBook, onClearLibrary, on
                         alt={`Cover of ${book.title}`}
                         width={40}
                         height={60}
-                        className="rounded object-cover"
+                        className="rounded"
                       />
                       <div>
                         <p className="font-semibold">{book.title}</p>

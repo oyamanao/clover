@@ -33,13 +33,13 @@ function SectionLoadingSkeleton({ count = 4 }: { count?: number }) {
     );
 }
 
-function BookSectionLoadingSkeleton({ count = 4 }: { count?: number }) {
+function BookSectionLoadingSkeleton({ count = 6 }: { count?: number }) {
     return (
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
             {[...Array(count)].map((_, i) => (
                  <Card key={i} className="animate-pulse">
                     <CardContent className="p-0">
-                        <div className="bg-muted-foreground/20 aspect-[2/3] w-full"></div>
+                        <div className="bg-muted-foreground/20 aspect-square w-full"></div>
                         <div className="p-4 space-y-2">
                             <div className="h-5 w-3/4 rounded bg-muted-foreground/20"></div>
                             <div className="h-4 w-1/2 rounded bg-muted-foreground/20"></div>
@@ -131,9 +131,9 @@ export default function HomePage() {
                         <h2 className="text-3xl font-headline">Recommended Books</h2>
                         {/* <Button variant="link">View All <ArrowRight className="ml-2"/></Button> */}
                     </div>
-                    {isLoadingPublic ? <BookSectionLoadingSkeleton count={12}/> : (
+                    {isLoadingPublic ? <BookSectionLoadingSkeleton /> : (
                          recommendedBooks && recommendedBooks.length > 0 ? (
-                            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
                                 {recommendedBooks.map(book => <BookCard key={book.title + book.author} book={book} />)}
                             </div>
                         ) : <p className="text-muted-foreground">No recommended books available right now.</p>

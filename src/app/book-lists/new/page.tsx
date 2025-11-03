@@ -173,7 +173,7 @@ export default function NewBookListPage() {
                                         key={book.title + book.author}
                                         className="p-3 border rounded-md bg-muted/50 flex items-start gap-4"
                                         >
-                                            <BookCover src={book.imageUrl} alt={`Cover of ${book.title}`} width={64} height={96} className="rounded-md object-cover" />
+                                            <BookCover src={book.imageUrl} alt={`Cover of ${book.title}`} width={64} height={96} className="rounded-md" />
                                             <div className="flex-grow">
                                                 <p className="font-semibold">{book.title}</p>
                                                 <p className="text-sm text-muted-foreground">by {book.author}</p>
@@ -205,7 +205,7 @@ export default function NewBookListPage() {
                                     {books.map((book) => (
                                     <div key={book.id} className="p-3 border rounded-md bg-accent/20 text-sm flex justify-between items-center">
                                         <div className="flex items-center gap-3">
-                                            <BookCover src={book.imageUrl} alt={`Cover of ${book.title}`} width={40} height={60} className="rounded object-cover" />
+                                            <BookCover src={book.imageUrl} alt={`Cover of ${book.title}`} width={40} height={60} className="rounded" />
                                             <div>
                                                 <p className="font-semibold">{book.title}</p>
                                                 <p className="text-muted-foreground">by {book.author}</p>

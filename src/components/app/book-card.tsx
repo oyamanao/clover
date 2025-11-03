@@ -13,12 +13,11 @@ export function BookCard({ book }: { book: BookWithListContext }) {
           <BookCover 
             src={book.imageUrl} 
             alt={`Cover of ${book.title}`} 
-            width={300}
-            height={450}
-            className="w-full object-cover aspect-[2/3]"
+            className="w-full object-cover"
+            aspectRatio="square"
           />
           <div className="p-4">
-             <h3 className="font-semibold font-headline truncate group-hover:text-accent">{book.title}</h3>
+             <h3 className="font-semibold font-headline line-clamp-2 h-12 group-hover:text-accent">{book.title}</h3>
             <p className="text-sm text-muted-foreground truncate">by {book.author}</p>
           </div>
         </CardContent>

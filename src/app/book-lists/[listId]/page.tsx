@@ -28,7 +28,7 @@ function BookInList({ book }: { book: any }) {
                 alt={`Cover of ${book.title}`} 
                 width={80} 
                 height={120} 
-                className="rounded-md object-cover shadow-md"
+                className="rounded-md shadow-md"
             />
             <div className="flex-grow">
                 <h3 className="text-lg font-semibold font-headline">{book.title}</h3>
