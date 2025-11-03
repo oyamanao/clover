@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
-import { Plus, Book as BookIcon, Search, Loader2, Trash2, XCircle, ArrowRight } from "lucide-react";
+import Image, { type ImageProps } from "next/image";
+import { Plus, Book as BookIcon, Search, Loader2, Trash2, XCircle, ArrowRight, BookImage } from "lucide-react";
 import type { Book as BookType, BookSearchResult } from "@/lib/types";
 import {
   Card,
@@ -37,6 +37,34 @@ interface BookLibraryProps {
   onClearLibrary: () => void;
   onNext: () => void;
 }
+
+function BookCover({ src, alt, width, height, className }: { src: string; alt: string; width: number; height: number; className?: string }) {
+  const [error, setError] = useState(false);
+
+  if (error || !src) {
+    return (
+      <div 
+        className="flex items-center justify-center bg-muted rounded"
+        style={{ width, height }}
+      >
+        <BookImage className="size-1/2 text-muted-foreground" />
+      </div>
+    );
+  }
+
+  return (
+    <Image 
+      src={src} 
+      alt={alt}
+      width={width}
+      height={height}
+      className={className}
+      unoptimized
+      onError={() => setError(true)}
+    />
+  );
+}
+
 
 export function BookLibrary({ books, onAddBook, onRemoveBook, onClearLibrary, onNext }: BookLibraryProps) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -106,13 +134,12 @@ export function BookLibrary({ books, onAddBook, onRemoveBook, onClearLibrary, on
                       key={book.title + book.author}
                       className="p-3 border rounded-md bg-muted/50 flex items-start gap-4"
                     >
-                      <Image 
+                      <BookCover 
                         src={book.imageUrl} 
                         alt={`Cover of ${book.title}`}
                         width={64}
                         height={96}
                         className="rounded-md object-cover"
-                        unoptimized
                       />
                       <div className="flex-grow">
                         <p className="font-semibold">{book.title}</p>
@@ -179,13 +206,12 @@ export function BookLibrary({ books, onAddBook, onRemoveBook, onClearLibrary, on
                     className="p-3 border rounded-md bg-accent/20 text-sm flex justify-between items-center"
                   >
                     <div className="flex items-center gap-3">
-                       <Image 
+                       <BookCover
                         src={book.imageUrl} 
                         alt={`Cover of ${book.title}`}
                         width={40}
                         height={60}
                         className="rounded object-cover"
-                        unoptimized
                       />
                       <div>
                         <p className="font-semibold">{book.title}</p>
