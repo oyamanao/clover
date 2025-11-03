@@ -4,7 +4,7 @@
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFirebase, useMemoFirebase } from '@/firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { useDoc } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -43,6 +43,7 @@ export default function EditBookListPage({ params: paramsPromise }: { params: Pr
   const [isPublic, setIsPublic] = useState(true);
   const [books, setBooks] = useState<Book[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<BookSearchResult[]>([]);
@@ -148,6 +149,30 @@ export default function EditBookListPage({ params: paramsPromise }: { params: Pr
         });
         errorEmitter.emit('permission-error', permissionError);
         setIsSaving(false);
+        // Explicitly return a rejected promise to prevent the assertion error
+        return Promise.reject(serverError);
+      });
+  };
+  
+  const handleDeleteList = async () => {
+    if (!user || !listRef) {
+      toast({ variant: 'destructive', title: 'Could not delete list.' });
+      return;
+    }
+    setIsDeleting(true);
+
+    deleteDoc(listRef)
+      .then(() => {
+        toast({ title: 'Book list deleted!', description: `"${listName}" has been permanently removed.` });
+        router.push(`/profile/${user.uid}`);
+      })
+      .catch((serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: listRef.path,
+          operation: 'delete',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        setIsDeleting(false);
         // Explicitly return a rejected promise to prevent the assertion error
         return Promise.reject(serverError);
       });
@@ -308,8 +333,9 @@ export default function EditBookListPage({ params: paramsPromise }: { params: Pr
                 <CardFooter className="flex-col sm:flex-row justify-between gap-4">
                     <AlertDialog>
                         <AlertDialogTrigger asChild>
-                            <Button variant="destructive">
-                                <Trash2 className="mr-2" /> Delete List
+                            <Button variant="destructive" disabled={isDeleting}>
+                                {isDeleting ? <Loader2 className="mr-2 animate-spin"/> : <Trash2 className="mr-2" />}
+                                {isDeleting ? 'Deleting...' : 'Delete List'}
                             </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
@@ -322,7 +348,7 @@ export default function EditBookListPage({ params: paramsPromise }: { params: Pr
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => { /* Implement delete */ }}>Continue</AlertDialogAction>
+                                <AlertDialogAction onClick={handleDeleteList} disabled={isDeleting}>Continue</AlertDialogAction>
                             </AlertDialogFooter>
                         </AlertDialogContent>
                     </AlertDialog>
@@ -336,3 +362,5 @@ export default function EditBookListPage({ params: paramsPromise }: { params: Pr
     </div>
   );
 }
+
+    
