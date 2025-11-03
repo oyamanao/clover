@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect, use } from 'react';
 import { useFirebase, useMemoFirebase } from '@/firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { useDoc } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Header } from '@/components/app/header';
@@ -15,6 +15,7 @@ import { BookCover } from '@/components/app/book-cover';
 import { Separator } from '@/components/ui/separator';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { cn } from '@/lib/utils';
 
 
 function BookInList({ book }: { book: any }) {
@@ -95,6 +96,7 @@ export default function BookListPage({ params: paramsPromise }: { params: Promis
     }, [listData, privateListData, isLoadingPublic, isLoadingPrivate, publicError, listId]);
     
     const isOwner = user && finalListData && user.uid === finalListData.userId;
+    const hasLiked = user && finalListData?.likedBy?.includes(user.uid);
 
     const handleLike = () => {
         if (!user) {
@@ -108,24 +110,33 @@ export default function BookListPage({ params: paramsPromise }: { params: Promis
 
         if (!firestore || !finalListData.id) return;
         const docRef = doc(firestore, 'public_book_lists', finalListData.id);
-        const currentLikes = finalListData.likes || 0;
-        const optimisticNewLikes = currentLikes + 1;
         
-        // Optimistically update the UI
-        setFinalListData((prev: any) => ({ ...prev, likes: optimisticNewLikes }));
+        const originalLikedBy = finalListData.likedBy || [];
+        const isCurrentlyLiked = originalLikedBy.includes(user.uid);
 
-        setDoc(docRef, { likes: optimisticNewLikes }, { merge: true })
+        // Optimistically update the UI
+        const optimisticLikedBy = isCurrentlyLiked
+            ? originalLikedBy.filter((uid: string) => uid !== user.uid)
+            : [...originalLikedBy, user.uid];
+
+        setFinalListData((prev: any) => ({ ...prev, likedBy: optimisticLikedBy }));
+
+        const firestoreUpdate = {
+            likedBy: isCurrentlyLiked ? arrayRemove(user.uid) : arrayUnion(user.uid)
+        };
+
+        setDoc(docRef, firestoreUpdate, { merge: true })
          .then(() => {
-            toast({ title: 'Liked!', description: `You liked "${finalListData.name}"` });
+            toast({ title: isCurrentlyLiked ? 'Unliked!' : 'Liked!', description: `You ${isCurrentlyLiked ? 'un' : ''}liked "${finalListData.name}"` });
          })
          .catch(async (serverError) => {
             // Revert optimistic update on error
-            setFinalListData((prev: any) => ({ ...prev, likes: currentLikes }));
+            setFinalListData((prev: any) => ({ ...prev, likedBy: originalLikedBy }));
 
             const permissionError = new FirestorePermissionError({
                 path: docRef.path,
                 operation: 'update',
-                requestResourceData: { likes: optimisticNewLikes },
+                requestResourceData: { likedBy: optimisticLikedBy },
             });
             errorEmitter.emit('permission-error', permissionError);
          });
@@ -187,8 +198,8 @@ export default function BookListPage({ params: paramsPromise }: { params: Promis
                             )}
                              <div className="flex items-center gap-4 text-muted-foreground">
                                 <div className="flex items-center gap-1">
-                                    <Heart className="size-4"/>
-                                    <span>{finalListData.likes || 0}</span>
+                                    <Heart className={cn("size-4", hasLiked && 'text-red-500 fill-current')} />
+                                    <span>{finalListData.likedBy?.length || 0}</span>
                                 </div>
                                  <div className="flex items-center gap-1">
                                     <Share2 className="size-4"/>
@@ -203,8 +214,8 @@ export default function BookListPage({ params: paramsPromise }: { params: Promis
                                     <Edit className="mr-2" /> Edit List
                                 </Button>
                             ) : (
-                                <Button variant="outline" onClick={handleLike} disabled={!finalListData.isPublic}>
-                                    <Heart className="mr-2" /> Like
+                                <Button variant={hasLiked ? "default" : "outline"} onClick={handleLike} disabled={!finalListData.isPublic}>
+                                    <Heart className={cn("mr-2", hasLiked && 'text-red-500 fill-current')} /> {hasLiked ? 'Liked' : 'Like'}
                                 </Button>
                             )}
                             <Button variant="outline" onClick={handleShare}>

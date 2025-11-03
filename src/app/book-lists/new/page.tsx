@@ -93,7 +93,7 @@ export default function NewBookListPage() {
       userPhotoURL: user.photoURL,
       books: books.map(({ id, ...rest }) => rest), // Remove temp id
       createdAt: serverTimestamp(),
-      likes: 0,
+      likedBy: [],
     };
 
     const collectionRef = collection(firestore, collectionPath);

@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Loader2, Book, Heart, Users, Lock, ArrowRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 function BookListCard({ list }: { list: any }) {
     return (
@@ -26,10 +27,10 @@ function BookListCard({ list }: { list: any }) {
                     <div className="flex justify-between items-center text-sm text-muted-foreground">
                         <div className="flex items-center gap-2">
                             <Book className="size-4"/>
-                            <span>{list.books.length} {list.books.length === 1 ? 'book' : 'books'}</span>
+                            <span>{list.books?.length || 0} {list.books?.length === 1 ? 'book' : 'books'}</span>
                         </div>
                          <div className="flex items-center gap-1">
-                            <span>{list.likes || 0}</span>
+                            <span>{list.likedBy?.length || 0}</span>
                             <Heart className="size-4"/>
                           </div>
                     </div>

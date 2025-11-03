@@ -90,9 +90,12 @@
             "type": "string"
           }
         },
-        "likes": {
-          "type": "integer",
-          "description": "Number of likes the book list has received."
+        "likedBy": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "A list of user IDs who have liked the book list."
         }
       },
       "required": [

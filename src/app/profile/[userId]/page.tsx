@@ -46,7 +46,7 @@ export default function ProfilePage({ params: paramsPromise }: { params: Promise
     return lists.sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
   }, [privateLists, publicLists, isOwnProfile]);
   
-  const isLoading = isProfileLoading || isUserLoading;
+  const isLoading = isProfileLoading;
   
   const isLoadingLists = isLoadingPublic || (isOwnProfile && isLoadingPrivate);
   
@@ -131,10 +131,10 @@ export default function ProfilePage({ params: paramsPromise }: { params: Promise
                     <div className="flex justify-between items-center text-sm text-muted-foreground">
                         <div className="flex items-center gap-2">
                           <Book className="size-4"/>
-                          <span>{list.books.length} {list.books.length === 1 ? 'book' : 'books'}</span>
+                          <span>{list.books?.length || 0} {list.books?.length === 1 ? 'book' : 'books'}</span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <span>{list.likes || 0}</span>
+                          <span>{list.likedBy?.length || 0}</span>
                           <Heart className="size-4"/>
                         </div>
                     </div>

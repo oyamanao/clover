@@ -17,7 +17,7 @@
  * - Public profiles in `/profiles` are read-only for everyone, and only the owner can create/update their own profile.
  * - Users can only read and write their own private book lists.
  * - Public book lists are readable by anyone.
- * - Any authenticated user can "like" a public list (updating the `likes` field).
+ * - Any authenticated user can "like" a public list by adding their UID to the `likedBy` array.
  * - Only the owner can create, delete, or modify other fields of a public list.
  * - Listing of user documents is disallowed.
  */
@@ -76,17 +76,33 @@ service cloud.firestore {
         // For new documents, check the userId in the incoming data
         return request.auth.uid == request.resource.data.userId;
       }
-      
-      function isLiking() {
-        // The set of fields being modified in the update.
-        let updatedKeys = request.resource.data.diff(resource.data).affectedKeys();
-        // Check if the only key being updated is 'likes'.
-        return updatedKeys.hasOnly(['likes']);
+
+      function isLikingOrUnliking() {
+        // The user must be authenticated.
+        if (request.auth == null) {
+          return false;
+        }
+        let uid = request.auth.uid;
+        let oldList = resource.data.likedBy;
+        let newList = request.resource.data.likedBy;
+        
+        // Ensure other fields are not being changed.
+        let otherFieldsChanged = request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likedBy']);
+        if (!otherFieldsChanged) {
+          return false;
+        }
+
+        // Allow adding UID to the list if it's not already there.
+        let isLiking = oldList.hasAny([uid]) == false && newList.hasAll([uid]) && newList.size() == oldList.size() + 1;
+        // Allow removing UID from the list if it is there.
+        let isUnliking = oldList.hasAny([uid]) && newList.hasAny([uid]) == false && newList.size() == oldList.size() - 1;
+
+        return isLiking || isUnliking;
       }
 
       allow read: if true;
       allow create: if request.auth != null && isIncomingDataOwner();
-      allow update: if request.auth != null && (isOwner() && isLiking() == false || isLiking());
+      allow update: if request.auth != null && (isOwner() || isLikingOrUnliking());
       allow delete: if request.auth != null && isOwner();
     }
   }
