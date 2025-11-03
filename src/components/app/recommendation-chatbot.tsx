@@ -15,7 +15,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 interface RecommendationChatbotProps {
@@ -31,20 +30,26 @@ function RecommendationItem({ recommendation }: { recommendation: string }) {
     const authorMatch = recommendation.match(/\*\*Author:\*\*\s*(.*)/);
     const reasonMatch = recommendation.match(/\*\*Reason:\*\*\s*([\s\S]*)/);
 
+    if (!titleMatch) {
+      // If the format doesn't match, render it as plain text. 
+      // This can happen if the AI gives a conversational follow-up.
+      return null;
+    }
+
     const title = titleMatch ? titleMatch[1].trim() : 'Unknown Title';
     const author = authorMatch ? authorMatch[1].trim() : 'Unknown Author';
     const reason = reasonMatch ? reasonMatch[1].trim() : recommendation;
 
   return (
-    <Card className="mt-3 bg-background/70">
-      <CardHeader className="p-3">
+    <Card className="mt-3 bg-card/80 backdrop-blur-sm border-accent/20">
+      <CardHeader className="p-4">
         <CardTitle className="text-base font-headline flex items-center gap-2">
           <BookHeart className="text-accent" /> {title}
         </CardTitle>
-        <CardDescription className="text-xs">by {author}</CardDescription>
+        <CardDescription className="text-xs !mt-1">by {author}</CardDescription>
       </CardHeader>
-      <CardContent className="p-3 pt-0">
-        <p className="text-sm whitespace-pre-wrap">{reason}</p>
+      <CardContent className="p-4 pt-0">
+        <p className="text-sm whitespace-pre-wrap font-body text-foreground/80">{reason.replace(/^Reason:\s*/, '')}</p>
       </CardContent>
     </Card>
   );
@@ -67,7 +72,7 @@ export function RecommendationChatbot({
         behavior: "smooth",
       });
     }
-  }, [chatHistory]);
+  }, [chatHistory, isLoading]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -120,7 +125,7 @@ export function RecommendationChatbot({
                   </p>
                   {message.recommendations && (
                      <div className="mt-4 space-y-3">
-                      {message.recommendations.split(/\n\s*\n/).map((rec, index) => (
+                      {message.recommendations.split(/\n\s*\n/).filter(rec => rec.trim()).map((rec, index) => (
                         <RecommendationItem key={index} recommendation={rec} />
                       ))}
                     </div>
@@ -142,8 +147,10 @@ export function RecommendationChatbot({
                     <Bot className="size-5" />
                   </AvatarFallback>
                 </Avatar>
-                <div className="max-w-md rounded-lg p-3 bg-muted space-y-2">
-                  <Skeleton className="h-4 w-10 animate-pulse" />
+                <div className="max-w-md rounded-lg p-3.5 bg-muted flex items-center space-x-2">
+                  <span className="size-2 bg-foreground/40 rounded-full animate-pulse delay-0"></span>
+                  <span className="size-2 bg-foreground/40 rounded-full animate-pulse delay-150"></span>
+                  <span className="size-2 bg-foreground/40 rounded-full animate-pulse delay-300"></span>
                 </div>
               </div>
             )}

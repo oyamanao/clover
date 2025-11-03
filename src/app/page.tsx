@@ -168,12 +168,17 @@ export default function Home() {
         .join("\n");
       
       const fullPreferences = [summarizedPreferences?.summary, userPreferences].filter(Boolean).join('\n\n');
+      
+      const lastAssistantMessage = chatHistory.filter(m => m.role === 'assistant').pop();
+      const currentRecommendations = lastAssistantMessage?.recommendations || initialRecommendations;
+
 
       const result = await refineRecommendationsViaChatbot({
         bookDetails,
         userPreferences: fullPreferences,
         chatHistory: formattedChatHistory,
         userInput,
+        currentRecommendations,
       });
 
       const assistantMessage: ChatMessage = {
