@@ -27,6 +27,7 @@ export function UserNav() {
   const googleProvider = new GoogleAuthProvider();
 
   const handleSignIn = async () => {
+    if (!auth || !firestore) return;
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
@@ -41,8 +42,8 @@ export function UserNav() {
       }, { merge: true });
 
     } catch (error: any) {
-      // Don't log an error if the user cancels the popup
-      if (error.code === 'auth/cancelled-popup-request') {
+      if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
+        // User closed the popup, do nothing.
         return;
       }
       console.error('Error during sign-in:', error);

@@ -22,6 +22,7 @@ export default function WelcomePage() {
   }, [user, isUserLoading, router]);
 
   const handleSignIn = async () => {
+    if (!auth || !firestore) return;
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
@@ -35,7 +36,8 @@ export default function WelcomePage() {
       }, { merge: true });
 
     } catch (error: any) {
-      if (error.code === 'auth/cancelled-popup-request') {
+      if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
+        // User closed the popup, do nothing.
         return;
       }
       console.error('Error during sign-in:', error);
