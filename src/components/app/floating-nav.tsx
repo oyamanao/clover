@@ -52,7 +52,7 @@ export function FloatingNav({ onHomepage }: { onHomepage: boolean }) {
               size="icon"
               className="rounded-full h-12 w-12 bg-background/80 backdrop-blur-sm shadow-lg hover:bg-accent/90 transition-all"
             >
-              <Clover className="size-6 text-accent-foreground" />
+              <Clover className="size-6 text-accent" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="start" forceMount>
