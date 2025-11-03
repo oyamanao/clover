@@ -253,9 +253,11 @@ export default function BookListPage({ params: paramsPromise }: { params: Promis
                         <Separator className="mt-4"/>
                          <div className="flex items-center gap-2 pt-4">
                             {isOwner ? (
-                                <Button>
-                                    <Edit className="mr-2" /> Edit List
-                                </Button>
+                                <Link href={`/book-lists/${listId}/edit`} passHref>
+                                    <Button>
+                                        <Edit className="mr-2" /> Edit List
+                                    </Button>
+                                </Link>
                             ) : (
                                 <>
                                     <Button variant={hasLiked ? "default" : "outline"} onClick={handleLike} disabled={!finalListData.isPublic}>
