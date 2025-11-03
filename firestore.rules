@@ -58,10 +58,12 @@ service cloud.firestore {
       function isIncomingDataOwner() {
         return request.auth.uid == request.resource.data.userId;
       }
-
+      
       function isLiking() {
-        // Allow an update if the only field being changed is 'likes'.
-        return request.resource.data.keys().hasOnly(['likes']);
+        // The set of fields being modified in the update.
+        let updatedKeys = request.resource.data.diff(resource.data).affectedKeys;
+        // Check if the only key being updated is 'likes'.
+        return updatedKeys.hasOnly(['likes']);
       }
 
       allow read: if true;
