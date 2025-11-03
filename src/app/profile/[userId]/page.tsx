@@ -89,7 +89,7 @@ export default function ProfilePage({ params: paramsPromise }: { params: Promise
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       
-      <main className="flex-grow container mx-auto p-4 pt-24 md:p-8">
+      <main className="flex-grow container mx-auto p-4 pt-32 md:p-8">
         {profileUser && (
             <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 mb-8">
             <Avatar className="h-20 w-20 sm:h-24 sm:w-24 border-4 border-accent">
