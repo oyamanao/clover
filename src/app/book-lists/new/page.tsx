@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { searchBooks } from '@/ai/flows/search-books';
 import type { BookSearchResult, Book } from '@/lib/types';
-import { Loader2, Plus, Search, Trash2, XCircle, Book as BookIcon } from 'lucide-react';
+import { Loader2, Plus, Search, Trash2, XCircle, Book as BookIcon, Check } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { BookCover } from '@/components/app/book-cover';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -192,21 +192,30 @@ export default function NewBookListPage() {
                                 {isSearching && <p className="text-sm text-muted-foreground">Searching...</p>}
                                 <ScrollArea className="h-60 pr-4">
                                     <div className="space-y-2">
-                                    {searchResults.map((book) => (
-                                        <div
-                                        key={book.title + book.author}
-                                        className="p-3 border rounded-md bg-muted/50 flex items-start gap-4"
-                                        >
-                                            <BookCover src={book.imageUrl} alt={`Cover of ${book.title}`} width={64} height={96} className="rounded-md" />
-                                            <div className="flex-grow">
-                                                <p className="font-semibold">{book.title}</p>
-                                                <p className="text-sm text-muted-foreground">by {book.author}</p>
-                                                <Button size="sm" onClick={() => handleAddBook(book)} className="mt-2">
-                                                    <Plus className="mr-2" /> Add to list
-                                                </Button>
+                                    {searchResults.map((book) => {
+                                        const isAdded = books.some(b => b.title === book.title && b.author === book.author);
+                                        return (
+                                            <div
+                                            key={book.title + book.author}
+                                            className="p-3 border rounded-md bg-muted/50 flex items-start gap-4"
+                                            >
+                                                <BookCover src={book.imageUrl} alt={`Cover of ${book.title}`} width={64} height={96} className="rounded-md" />
+                                                <div className="flex-grow">
+                                                    <p className="font-semibold">{book.title}</p>
+                                                    <p className="text-sm text-muted-foreground">by {book.author}</p>
+                                                    {isAdded ? (
+                                                        <Button size="sm" disabled className="mt-2">
+                                                            <Check className="mr-2" /> Added
+                                                        </Button>
+                                                    ) : (
+                                                        <Button size="sm" onClick={() => handleAddBook(book)} className="mt-2">
+                                                            <Plus className="mr-2" /> Add to list
+                                                        </Button>
+                                                    )}
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                     </div>
                                 </ScrollArea>
                                 </div>
