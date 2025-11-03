@@ -5,7 +5,6 @@ import { useFirebase, useMemoFirebase } from '@/firebase';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Header } from '@/components/app/header';
 import { Loader2, User as UserIcon, Book, PlusCircle, Heart } from 'lucide-react';
 import { doc, collection, query, where } from 'firebase/firestore';
 import { useDoc, useCollection } from '@/firebase';
@@ -61,7 +60,7 @@ export default function ProfilePage({ params: paramsPromise }: { params: Promise
   if (!profileUser) {
     return (
         <div className="flex flex-col min-h-screen bg-background text-foreground">
-          <Header />
+          
           <main className="flex-grow flex items-center justify-center">
             <div className="text-center">
               <h1 className="text-2xl font-headline">User not found</h1>
@@ -74,7 +73,7 @@ export default function ProfilePage({ params: paramsPromise }: { params: Promise
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
-      <Header />
+      
       <main className="flex-grow container mx-auto p-4 md:p-8">
         {profileUser && (
             <div className="flex items-center gap-6 mb-8">

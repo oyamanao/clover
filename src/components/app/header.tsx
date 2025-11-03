@@ -12,6 +12,11 @@ export function Header() {
   const { user } = useFirebase();
   const pathname = usePathname();
 
+  // Only show the full header on the homepage
+  if (pathname !== '/') {
+    return null;
+  }
+
   return (
     <header className="border-b bg-card shadow-sm">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">

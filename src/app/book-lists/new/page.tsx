@@ -13,9 +13,8 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { searchBooks } from '@/ai/flows/search-books';
 import type { BookSearchResult, Book } from '@/lib/types';
-import { Loader2, Plus, Search, Trash2, XCircle, Book as BookIcon, BookImage } from 'lucide-react';
+import { Loader2, Plus, Search, Trash2, XCircle, Book as BookIcon } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Header } from '@/components/app/header';
 import { BookCover } from '@/components/app/book-cover';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -124,7 +123,7 @@ export default function NewBookListPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
-        <Header />
+        
         <main className="flex-grow container mx-auto p-4 md:p-8">
             <Card className="max-w-4xl mx-auto">
                 <CardHeader>

@@ -5,7 +5,6 @@ import { useFirebase, useMemoFirebase } from '@/firebase';
 import { doc, setDoc, arrayUnion, arrayRemove, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { useDoc } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { Header } from '@/components/app/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Heart, Share2, Edit, User as UserIcon, Book, Copy } from 'lucide-react';
@@ -211,7 +210,7 @@ export default function BookListPage({ params: paramsPromise }: { params: Promis
      if (!finalListData) {
         return (
             <div className="flex flex-col min-h-screen bg-background text-foreground">
-                <Header />
+                
                 <main className="flex-grow flex items-center justify-center">
                     <div className="text-center">
                         <h1 className="text-2xl font-headline">Book List Not Found</h1>
@@ -227,7 +226,7 @@ export default function BookListPage({ params: paramsPromise }: { params: Promis
 
     return (
         <div className="flex flex-col min-h-screen bg-background text-foreground">
-            <Header />
+            
             <main className="flex-grow container mx-auto p-4 md:p-8">
                 <Card className="max-w-4xl mx-auto">
                     <CardHeader>

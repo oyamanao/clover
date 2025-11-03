@@ -8,7 +8,6 @@ import { doc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Button } from '@/components/ui/button';
 import { Loader2, LogIn, Clover } from 'lucide-react';
-import { Header } from '@/components/app/header';
 
 export default function WelcomePage() {
   const { auth, firestore, user, isUserLoading } = useFirebase();
@@ -61,7 +60,6 @@ export default function WelcomePage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
-        <Header />
         <main className="flex-grow flex items-center justify-center">
             <div className="text-center space-y-8">
                 <Clover className="size-24 text-accent mx-auto" />
