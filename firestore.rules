@@ -60,8 +60,8 @@ service cloud.firestore {
       }
 
       function isLiking() {
-        let incomingKeys = request.resource.data.keys();
-        return incomingKeys.hasAll(['likes']) && incomingKeys.size() == 1;
+        // Allow an update if the only field being changed is 'likes'.
+        return request.resource.data.keys().hasOnly(['likes']);
       }
 
       allow read: if true;
