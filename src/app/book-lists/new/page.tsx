@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFirebase } from '@/firebase';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
@@ -33,6 +34,30 @@ export default function NewBookListPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<BookSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+
+  useEffect(() => {
+    // Check for books passed from the recommendations page
+    const storedBooks = localStorage.getItem('books-for-new-list');
+    if (storedBooks) {
+      try {
+        const parsedBooks: Omit<Book, 'id'>[] = JSON.parse(storedBooks);
+        if (Array.isArray(parsedBooks)) {
+          // Give them temporary unique IDs for the UI
+          setBooks(parsedBooks.map((b, i) => ({ ...b, id: Date.now() + i })));
+          toast({
+            title: "Books imported!",
+            description: `${parsedBooks.length} books from your recommendation session have been added.`
+          });
+        }
+      } catch (error) {
+        console.error("Failed to parse books from local storage", error);
+      } finally {
+        // Clean up after importing
+        localStorage.removeItem('books-for-new-list');
+      }
+    }
+  }, [toast]);
+
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();

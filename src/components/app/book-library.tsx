@@ -1,8 +1,9 @@
+
 "use client";
 
 import { useState } from "react";
 import Image from "next/image";
-import { Plus, Book as BookIcon, Search, Loader2, Trash2, XCircle, ArrowRight, BookImage } from "lucide-react";
+import { Plus, Book as BookIcon, Search, Loader2, Trash2, XCircle, ArrowRight, BookImage, ChevronDown } from "lucide-react";
 import type { Book as BookType, BookSearchResult } from "@/lib/types";
 import {
   Card,
@@ -29,6 +30,9 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { BookCover } from "./book-cover";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useRouter } from "next/navigation";
+
 
 interface BookLibraryProps {
   books: BookType[];
@@ -43,6 +47,8 @@ export function BookLibrary({ books, onAddBook, onRemoveBook, onClearLibrary, on
   const [searchResults, setSearchResults] = useState<BookSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
+
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,6 +70,12 @@ export function BookLibrary({ books, onAddBook, onRemoveBook, onClearLibrary, on
       setIsSearching(false);
     }
   };
+
+  const handleSaveAsList = () => {
+    localStorage.setItem('books-for-new-list', JSON.stringify(books));
+    router.push('/book-lists/new');
+  };
+
 
   return (
     <Card className="overflow-hidden mt-4">
@@ -211,10 +223,24 @@ export function BookLibrary({ books, onAddBook, onRemoveBook, onClearLibrary, on
         </div>
       </CardContent>
        {books.length > 0 && (
-        <CardFooter className="border-t pt-6 mt-8">
-          <Button onClick={onNext} className="ml-auto">
-            Next: Set Preferences <ArrowRight className="ml-2" />
-          </Button>
+        <CardFooter className="border-t pt-6 mt-8 justify-end">
+          <div className="flex rounded-md">
+            <Button onClick={onNext} className="rounded-r-none">
+              Next: Set Preferences <ArrowRight className="ml-2" />
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="icon" className="rounded-l-none border-l">
+                  <ChevronDown />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleSaveAsList}>
+                  Save as Book List
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </CardFooter>
       )}
     </Card>
