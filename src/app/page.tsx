@@ -122,43 +122,60 @@ export default function Home() {
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       <Header />
       <main className="flex-grow container mx-auto p-4 md:p-8">
-        <Tabs
-          value={activeTab}
-          onValueChange={setActiveTab}
-          className="w-full"
-        >
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="library">
-              <Book className="mr-2" /> Library
-            </TabsTrigger>
-            <TabsTrigger value="preferences" disabled={books.length === 0}>
-              <Sparkles className="mr-2" /> Preferences
-            </TabsTrigger>
-            <TabsTrigger
-              value="chatbot"
-              disabled={books.length === 0 || userPreferences === ""}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 w-full">
+          <div className="lg:col-span-1">
+            <Tabs
+              value={activeTab}
+              onValueChange={setActiveTab}
+              className="w-full"
             >
-              <Bot className="mr-2" /> Chatbot
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="library">
-            <BookLibrary books={books} onAddBook={handleAddBook} />
-          </TabsContent>
-          <TabsContent value="preferences">
-            <PreferenceTool
-              onGenerateRecommendations={handleGenerateRecommendations}
-              isLoading={isGenerating}
-            />
-          </TabsContent>
-          <TabsContent value="chatbot">
-            <RecommendationChatbot
-              chatHistory={chatHistory}
-              onSendMessage={handleSendMessage}
-              isLoading={isChatting}
-              isReady={books.length > 0 && userPreferences !== ""}
-            />
-          </TabsContent>
-        </Tabs>
+              <TabsList className="grid w-full grid-cols-1">
+                <TabsTrigger value="library">
+                  <Book className="mr-2" /> Library
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="library">
+                <BookLibrary books={books} onAddBook={handleAddBook} />
+              </TabsContent>
+            </Tabs>
+          </div>
+          <div className="lg:col-span-2">
+            <Tabs
+              value={activeTab}
+              onValueChange={setActiveTab}
+              className="w-full"
+            >
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger
+                  value="preferences"
+                  disabled={books.length === 0}
+                >
+                  <Sparkles className="mr-2" /> Preferences
+                </TabsTrigger>
+                <TabsTrigger
+                  value="chatbot"
+                  disabled={books.length === 0 || userPreferences === ""}
+                >
+                  <Bot className="mr-2" /> Chatbot
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="preferences">
+                <PreferenceTool
+                  onGenerateRecommendations={handleGenerateRecommendations}
+                  isLoading={isGenerating}
+                />
+              </TabsContent>
+              <TabsContent value="chatbot">
+                <RecommendationChatbot
+                  chatHistory={chatHistory}
+                  onSendMessage={handleSendMessage}
+                  isLoading={isChatting}
+                  isReady={books.length > 0 && userPreferences !== ""}
+                />
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
       </main>
     </div>
   );
