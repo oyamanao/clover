@@ -3,7 +3,6 @@
 import { useMemo, useEffect } from "react";
 import { useFirebase, useCollection, useMemoFirebase } from "@/firebase";
 import { useRouter }from "next/navigation";
-import { Header } from "@/components/app/header";
 import { collection, query, where, limit, orderBy } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -13,6 +12,7 @@ import { BookCard } from "@/components/app/book-card";
 import type { BookWithListContext } from "@/lib/types";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { Card, CardContent, CardHeader } from "../components/ui/card";
+import { Clover } from "lucide-react";
 
 function SectionLoadingSkeleton({ count = 4 }: { count?: number }) {
     return (
@@ -124,8 +124,14 @@ export default function HomePage() {
     
     return (
         <div className="flex flex-col min-h-screen bg-background text-foreground">
-            <Header />
             <main className="flex-grow container mx-auto p-4 md:p-8 space-y-16">
+                 <header className="py-8 text-center">
+                    <Clover className="size-16 text-accent mx-auto" />
+                    <h1 className="text-5xl font-headline font-bold text-accent leading-none mt-4">
+                        Clover AI
+                    </h1>
+                    <p className="text-lg text-muted-foreground mt-2">Your AI-powered guide to the world of books.</p>
+                </header>
                 <section>
                     <div className="flex justify-between items-center mb-6">
                         <h2 className="text-3xl font-headline">Recommended Books</h2>
