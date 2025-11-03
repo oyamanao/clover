@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect, use } from 'react';
 import { useFirebase, useMemoFirebase } from '@/firebase';
-import { doc, updateDoc, increment, getDoc } from 'firebase/firestore';
+import { doc, updateDoc, increment, getDoc, setDoc } from 'firebase/firestore';
 import { useDoc } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Header } from '@/components/app/header';
@@ -12,6 +12,7 @@ import { Loader2, Heart, Share2, Edit, User as UserIcon, Book } from 'lucide-rea
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
 import { BookCover } from '@/components/app/book-cover';
+import { Separator } from '@/components/ui/separator';
 
 function BookInList({ book }: { book: any }) {
     return (
@@ -63,20 +64,33 @@ export default function BookListPage({ params: paramsPromise }: { params: Promis
         const loadData = async () => {
             setIsLoading(true);
             let dataToShow = null;
+            let finalId = listId;
+
             if (listData) {
                 dataToShow = listData;
+                finalId = listData.id;
             } else if (privateListData) {
                 dataToShow = privateListData;
+                finalId = privateListData.id;
             }
 
             if (dataToShow) {
-                setFinalListData({...dataToShow, id: listId});
+                setFinalListData({...dataToShow, id: finalId});
                 // Fetch owner data
                 if (firestore && dataToShow.userId) {
                     const ownerRef = doc(firestore, 'users', dataToShow.userId);
                     const ownerSnap = await getDoc(ownerRef);
                     if (ownerSnap.exists()) {
                         setListOwner(ownerSnap.data());
+                    } else {
+                        // If owner data isn't in users collection, maybe it's on the list
+                        if (dataToShow.userName) {
+                            setListOwner({
+                                uid: dataToShow.userId,
+                                displayName: dataToShow.userName,
+                                photoURL: null
+                            });
+                        }
                     }
                 }
             }
@@ -104,10 +118,13 @@ export default function BookListPage({ params: paramsPromise }: { params: Promis
         if (!firestore || !finalListData.id) return;
         const docRef = doc(firestore, 'public_book_lists', finalListData.id);
         try {
-            await updateDoc(docRef, {
-                likes: increment(1)
-            });
-            setFinalListData((prev: any) => ({ ...prev, likes: (prev.likes || 0) + 1 }));
+            // Using setDoc with merge to ensure the document is created if it somehow doesn't exist
+            // while trying to increment. `increment` only works with `updateDoc`.
+            // A more robust way is to use a transaction, but for a simple like, this is okay.
+            const currentLikes = finalListData.likes || 0;
+            await setDoc(docRef, { likes: currentLikes + 1 }, { merge: true });
+
+            setFinalListData((prev: any) => ({ ...prev, likes: currentLikes + 1 }));
             toast({ title: 'Liked!', description: `You liked "${finalListData.name}"` });
         } catch (error) {
             console.error("Error liking list:", error);
@@ -150,7 +167,8 @@ export default function BookListPage({ params: paramsPromise }: { params: Promis
                     <CardHeader>
                         <CardTitle className="text-4xl font-headline">{finalListData.name}</CardTitle>
                         <CardDescription className="pt-2">{finalListData.description}</CardDescription>
-                        <div className="flex justify-between items-center pt-4">
+
+                        <div className="flex justify-between items-end pt-4">
                             {listOwner && (
                                 <Link href={`/profile/${listOwner.uid}`} className="flex items-center gap-3 group">
                                     <Avatar className="h-10 w-10 border-2 border-transparent group-hover:border-accent transition-colors">
@@ -165,20 +183,31 @@ export default function BookListPage({ params: paramsPromise }: { params: Promis
                                     </div>
                                 </Link>
                             )}
-                             <div className="flex items-center gap-2">
-                                {isOwner ? (
-                                    <Button>
-                                        <Edit className="mr-2" /> Edit List
-                                    </Button>
-                                ) : (
-                                    <Button variant="outline" onClick={handleLike} disabled={!finalListData.isPublic}>
-                                        <Heart className="mr-2" /> Like ({finalListData.likes || 0})
-                                    </Button>
-                                )}
-                                <Button onClick={handleShare}>
-                                    <Share2 className="mr-2" /> Share
-                                </Button>
+                             <div className="flex items-center gap-4 text-muted-foreground">
+                                <div className="flex items-center gap-1">
+                                    <Heart className="size-4"/>
+                                    <span>{finalListData.likes || 0}</span>
+                                </div>
+                                 <div className="flex items-center gap-1">
+                                    <Share2 className="size-4"/>
+                                    <span>Share</span>
+                                </div>
                             </div>
+                        </div>
+                        <Separator className="mt-4"/>
+                         <div className="flex items-center gap-2 pt-4">
+                            {isOwner ? (
+                                <Button>
+                                    <Edit className="mr-2" /> Edit List
+                                </Button>
+                            ) : (
+                                <Button variant="outline" onClick={handleLike} disabled={!finalListData.isPublic}>
+                                    <Heart className="mr-2" /> Like
+                                </Button>
+                            )}
+                            <Button variant="outline" onClick={handleShare}>
+                                <Share2 className="mr-2" /> Share
+                            </Button>
                         </div>
                     </CardHeader>
                     <CardContent className="p-0">
