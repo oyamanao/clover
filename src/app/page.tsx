@@ -123,31 +123,14 @@ export default function HomePage() {
                 }
 
             } else {
-                // Fallback for new users: show some popular books
-                if (publicLists) {
-                     const books: BookWithListContext[] = [];
-                    const uniqueBooks = new Set<string>(); // "title|author"
-                    
-                    for (const list of publicLists) {
-                        if (list.books) {
-                            for (const book of list.books) {
-                                const uniqueKey = `${book.title}|${book.author}`;
-                                if (!uniqueBooks.has(uniqueKey)) {
-                                    uniqueBooks.add(uniqueKey);
-                                    books.push({ ...book, listId: list.id, listName: list.name });
-                                }
-                            }
-                        }
-                    }
-                    setRecommendedBooks(books.slice(0, 6).map((b,i) => ({...b, id: i})));
-                }
+                setRecommendedBooks([]);
             }
             setIsLoadingRecommendations(false);
         };
 
         getRecommendations();
 
-    }, [myPublicLists, myPrivateLists, isLoadingMyLists, user, publicLists]);
+    }, [myPublicLists, myPrivateLists, isLoadingMyLists, user]);
 
 
     const recentlyViewedLists = useMemo(() => {
