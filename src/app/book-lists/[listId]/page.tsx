@@ -8,9 +8,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Header } from '@/components/app/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Heart, Share2, Edit, User as UserIcon, Book, BookImage } from 'lucide-react';
+import { Loader2, Heart, Share2, Edit, User as UserIcon, Book } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import Image from 'next/image';
 import Link from 'next/link';
 import { BookCover } from '@/components/app/book-cover';
 
@@ -172,15 +171,13 @@ export default function BookListPage({ params: paramsPromise }: { params: Promis
                                         <Edit className="mr-2" /> Edit List
                                     </Button>
                                 ) : (
-                                    <>
-                                        <Button variant="outline" onClick={handleLike} disabled={!finalListData.isPublic}>
-                                            <Heart className="mr-2" /> Like ({finalListData.likes || 0})
-                                        </Button>
-                                         <Button onClick={handleShare}>
-                                            <Share2 className="mr-2" /> Share
-                                        </Button>
-                                    </>
+                                    <Button variant="outline" onClick={handleLike} disabled={!finalListData.isPublic}>
+                                        <Heart className="mr-2" /> Like ({finalListData.likes || 0})
+                                    </Button>
                                 )}
+                                <Button onClick={handleShare}>
+                                    <Share2 className="mr-2" /> Share
+                                </Button>
                             </div>
                         </div>
                     </CardHeader>
