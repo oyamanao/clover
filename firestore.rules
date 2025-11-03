@@ -61,7 +61,7 @@ service cloud.firestore {
       
       function isLiking() {
         // The set of fields being modified in the update.
-        let updatedKeys = request.resource.data.diff(resource.data).affectedKeys;
+        let updatedKeys = request.resource.data.diff(resource.data).affectedKeys();
         // Check if the only key being updated is 'likes'.
         return updatedKeys.hasOnly(['likes']);
       }
