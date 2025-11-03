@@ -3,7 +3,7 @@
  *
  * Core Philosophy:
  * This ruleset enforces a strict user-ownership model for user profiles and private book lists.
- * Public book lists are readable by anyone, but writable only by their owners, with an exception for "likes".
+ * Public book lists are readable by anyone, but writable only by their owners, with a specific exception for "likes".
  *
  * Data Structure:
  * - /users/{userId}: User profile data.
@@ -60,27 +60,13 @@ service cloud.firestore {
       }
 
       function isLiking() {
-        // This function ensures that only the 'likes' field is being updated.
-        // It checks that the incoming data has exactly one key, and that key is 'likes'.
         let incomingKeys = request.resource.data.keys();
         return incomingKeys.hasAll(['likes']) && incomingKeys.size() == 1;
-      }
-      
-      function canUpdate() {
-        // An update is allowed if the user is the owner (can edit anything)
-        // or if they are authenticated and only performing a 'like' action.
-        if (isOwner()) {
-          return true;
-        }
-        if (request.auth != null && isLiking()) {
-          return true;
-        }
-        return false;
       }
 
       allow read: if true;
       allow create: if request.auth != null && isIncomingDataOwner();
-      allow update: if request.auth != null && canUpdate();
+      allow update: if request.auth != null && (isOwner() || isLiking());
       allow delete: if request.auth != null && isOwner();
     }
   }
