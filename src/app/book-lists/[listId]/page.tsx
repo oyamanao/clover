@@ -2,13 +2,13 @@
 
 import { useMemo, useState, useEffect, use } from 'react';
 import { useFirebase, useMemoFirebase } from '@/firebase';
-import { doc, getDoc, setDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { doc, setDoc, arrayUnion, arrayRemove, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { useDoc } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Header } from '@/components/app/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Heart, Share2, Edit, User as UserIcon, Book } from 'lucide-react';
+import { Loader2, Heart, Share2, Edit, User as UserIcon, Book, Copy } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
 import { BookCover } from '@/components/app/book-cover';
@@ -16,6 +16,7 @@ import { Separator } from '@/components/ui/separator';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { cn } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
 
 
 function BookInList({ book }: { book: any }) {
@@ -41,6 +42,7 @@ export default function BookListPage({ params: paramsPromise }: { params: Promis
     const { listId } = use(paramsPromise);
     const { firestore, user } = useFirebase();
     const { toast } = useToast();
+    const router = useRouter();
 
     // To find the booklist, we have to check both public and private collections.
     const listRef = useMemoFirebase(() => {
@@ -62,6 +64,7 @@ export default function BookListPage({ params: paramsPromise }: { params: Promis
     
     const [finalListData, setFinalListData] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isCopying, setIsCopying] = useState(false);
 
      useEffect(() => {
         const loadData = async () => {
@@ -147,6 +150,46 @@ export default function BookListPage({ params: paramsPromise }: { params: Promis
         toast({ title: "Link Copied!", description: "The link to this list has been copied to your clipboard." });
     }
 
+    const handleCopyList = async () => {
+        if (!user || !firestore || !finalListData) {
+            toast({ variant: 'destructive', title: 'You must be logged in to copy a list.' });
+            return;
+        }
+        setIsCopying(true);
+
+        const newBookListData = {
+            name: `Copy of ${finalListData.name}`,
+            description: finalListData.description,
+            isPublic: false, // Copied lists are private by default
+            userId: user.uid,
+            userName: user.displayName,
+            userPhotoURL: user.photoURL,
+            books: finalListData.books || [],
+            createdAt: serverTimestamp(),
+            likedBy: [],
+        };
+        
+        const collectionRef = collection(firestore, `users/${user.uid}/book_lists`);
+
+        addDoc(collectionRef, newBookListData)
+            .then(() => {
+                toast({
+                    title: 'List Copied!',
+                    description: `A private copy of "${finalListData.name}" has been added to your lists.`,
+                });
+                router.push(`/profile/${user.uid}`);
+            })
+            .catch(async (serverError) => {
+                const permissionError = new FirestorePermissionError({
+                    path: collectionRef.path,
+                    operation: 'create',
+                    requestResourceData: newBookListData,
+                });
+                errorEmitter.emit('permission-error', permissionError);
+                setIsCopying(false);
+            });
+    };
+
     if (isLoading) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -214,9 +257,17 @@ export default function BookListPage({ params: paramsPromise }: { params: Promis
                                     <Edit className="mr-2" /> Edit List
                                 </Button>
                             ) : (
-                                <Button variant={hasLiked ? "default" : "outline"} onClick={handleLike} disabled={!finalListData.isPublic}>
-                                    <Heart className={cn("mr-2", hasLiked && 'text-red-500 fill-current')} /> {hasLiked ? 'Liked' : 'Like'}
-                                </Button>
+                                <>
+                                    <Button variant={hasLiked ? "default" : "outline"} onClick={handleLike} disabled={!finalListData.isPublic}>
+                                        <Heart className={cn("mr-2", hasLiked && 'text-red-500 fill-current')} /> {hasLiked ? 'Liked' : 'Like'}
+                                    </Button>
+                                    {user && finalListData.isPublic && (
+                                        <Button variant="outline" onClick={handleCopyList} disabled={isCopying}>
+                                            {isCopying ? <Loader2 className="mr-2 animate-spin" /> : <Copy className="mr-2" />}
+                                            {isCopying ? 'Copying...' : 'Copy List'}
+                                        </Button>
+                                    )}
+                                </>
                             )}
                             <Button variant="outline" onClick={handleShare}>
                                 <Share2 className="mr-2" /> Share
