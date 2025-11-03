@@ -53,9 +53,9 @@ export function FloatingNav({ onHomepage }: { onHomepage: boolean }) {
               variant="outline"
               size="icon"
               className={cn(
-                "rounded-full h-12 w-12 bg-background/80 backdrop-blur-sm shadow-lg transition-all shadow-accent/50", 
+                "rounded-full h-12 w-12 bg-background/80 backdrop-blur-sm shadow-lg transition-all shadow-accent/20", 
                 "hover:bg-accent/90",
-                "data-[state=open]:bg-accent data-[state=open]:text-accent-foreground"
+                "data-[state=open]:bg-primary data-[state=open]:text-primary-foreground"
                 )}
             >
               <Clover className="size-6" />
