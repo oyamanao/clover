@@ -111,25 +111,27 @@ export default function ProfilePage({ params: paramsPromise }: { params: Promise
         ) : bookLists.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {bookLists.map((list) => (
-              <Card key={list.id} className="hover:shadow-lg hover:border-accent/50 transition-all flex flex-col">
-                <CardHeader>
-                  <CardTitle className="font-headline">{list.name}</CardTitle>
-                  <CardDescription>{list.isPublic ? 'Public List' : 'Private List'}</CardDescription>
-                </CardHeader>
-                <CardContent className="flex-grow">
-                  <p className="text-muted-foreground mb-4 line-clamp-2">{list.description}</p>
-                  <div className="flex justify-between items-center text-sm text-muted-foreground">
-                      <div className="flex items-center gap-2">
-                        <Book className="size-4"/>
-                        <span>{list.books.length} {list.books.length === 1 ? 'book' : 'books'}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span>{list.likes || 0}</span>
-                        <Heart className="size-4"/>
-                      </div>
-                  </div>
-                </CardContent>
-              </Card>
+               <Link key={list.id} href={`/book-lists/${list.id}`} className="block h-full">
+                <Card className="hover:shadow-lg hover:border-accent/50 transition-all flex flex-col h-full">
+                  <CardHeader>
+                    <CardTitle className="font-headline">{list.name}</CardTitle>
+                    <CardDescription>{list.isPublic ? 'Public List' : 'Private List'}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex-grow">
+                    <p className="text-muted-foreground mb-4 line-clamp-2">{list.description}</p>
+                    <div className="flex justify-between items-center text-sm text-muted-foreground">
+                        <div className="flex items-center gap-2">
+                          <Book className="size-4"/>
+                          <span>{list.books.length} {list.books.length === 1 ? 'book' : 'books'}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span>{list.likes || 0}</span>
+                          <Heart className="size-4"/>
+                        </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
             ))}
           </div>
         ) : (
