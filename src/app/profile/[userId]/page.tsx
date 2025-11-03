@@ -12,23 +12,22 @@ import Link from 'next/link';
 
 export default function ProfilePage({ params }: { params: { userId: string } }) {
   const { firestore, user: currentUser, isUserLoading } = useFirebase();
-  const { userId } = params;
 
   const userRef = useMemoFirebase(() => {
-    if (!firestore || !userId) return null;
-    return doc(firestore, 'users', userId);
-  }, [firestore, userId]);
+    if (!firestore || !params.userId) return null;
+    return doc(firestore, 'users', params.userId);
+  }, [firestore, params.userId]);
   const { data: profileUser, isLoading: isProfileLoading } = useDoc(userRef);
 
   const privateListsQuery = useMemoFirebase(() => {
-    if (!firestore || !userId || currentUser?.uid !== userId) return null;
-    return query(collection(firestore, `users/${userId}/book_lists`));
-  }, [firestore, userId, currentUser?.uid]);
+    if (!firestore || !params.userId || currentUser?.uid !== params.userId) return null;
+    return query(collection(firestore, `users/${params.userId}/book_lists`));
+  }, [firestore, params.userId, currentUser?.uid]);
 
   const publicListsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'public_book_lists'), where('userId', '==', userId));
-  }, [firestore, userId]);
+    if (!firestore || !params.userId) return null;
+    return query(collection(firestore, 'public_book_lists'), where('userId', '==', params.userId));
+  }, [firestore, params.userId]);
 
   const { data: privateLists, isLoading: isLoadingPrivate } = useCollection(privateListsQuery);
   const { data: publicLists, isLoading: isLoadingPublic } = useCollection(publicListsQuery);
@@ -58,7 +57,7 @@ export default function ProfilePage({ params }: { params: { userId: string } }) 
     )
   }
 
-  const isOwnProfile = currentUser?.uid === userId;
+  const isOwnProfile = currentUser?.uid === params.userId;
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
