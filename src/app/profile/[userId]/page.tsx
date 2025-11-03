@@ -16,18 +16,18 @@ export default function ProfilePage({ params }: { params: { userId: string } }) 
   const userRef = useMemoFirebase(() => {
     if (!firestore || !params.userId) return null;
     return doc(firestore, 'users', params.userId);
-  }, [firestore, params.userId]);
+  }, [firestore, params]);
   const { data: profileUser, isLoading: isProfileLoading } = useDoc(userRef);
 
   const privateListsQuery = useMemoFirebase(() => {
     if (!firestore || !params.userId || currentUser?.uid !== params.userId) return null;
     return query(collection(firestore, `users/${params.userId}/book_lists`));
-  }, [firestore, params.userId, currentUser?.uid]);
+  }, [firestore, params, currentUser]);
 
   const publicListsQuery = useMemoFirebase(() => {
     if (!firestore || !params.userId) return null;
     return query(collection(firestore, 'public_book_lists'), where('userId', '==', params.userId));
-  }, [firestore, params.userId]);
+  }, [firestore, params]);
 
   const { data: privateLists, isLoading: isLoadingPrivate } = useCollection(privateListsQuery);
   const { data: publicLists, isLoading: isLoadingPublic } = useCollection(publicListsQuery);
