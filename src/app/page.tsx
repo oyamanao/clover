@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { useFirebase, useCollection, useMemoFirebase } from "@/firebase";
 import { useRouter }from "next/navigation";
 import { Header } from "@/components/app/header";
@@ -63,9 +63,11 @@ export default function HomePage() {
     const { firestore, user, isUserLoading } = useFirebase();
     const router = useRouter();
 
-    if (!isUserLoading && !user) {
-        router.push('/welcome');
-    }
+    useEffect(() => {
+        if (!isUserLoading && !user) {
+            router.push('/welcome');
+        }
+    }, [isUserLoading, user, router]);
 
     const publicListsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
