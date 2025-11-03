@@ -30,6 +30,52 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState("library");
 
   const { toast } = useToast();
+  
+  const handleRefreshPreferences = async () => {
+    if (books.length === 0) {
+       toast({
+        variant: "destructive",
+        title: "Empty Library",
+        description: "Add some books to your library first.",
+      });
+      return;
+    }
+    setIsSummarizing(true);
+    setSummarizedPreferences(null);
+    setUserPreferences("");
+    try {
+      const libraryContent = books.map(b => `${b.title} by ${b.author}`).join('\n');
+      const result = await summarizeLibrary({ books: libraryContent });
+      
+      setSummarizedPreferences(result);
+
+      toast({
+        title: "Preferences Refreshed",
+        description: "We've analyzed your library and updated your preferences.",
+      });
+      setActiveTab("preferences");
+    } catch (error) {
+       console.error(error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to refresh preferences.",
+      });
+    } finally {
+      setIsSummarizing(false);
+    }
+  };
+  
+  useEffect(() => {
+    if (books.length > 0) {
+      handleRefreshPreferences();
+    } else {
+      setUserPreferences("");
+      setSummarizedPreferences(null);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [books.length]);
+
 
   const handleAddBook = (book: Omit<Book, "id">) => {
     // Check if book is already in the library
@@ -71,58 +117,24 @@ export default function Home() {
     });
   };
 
-  const handleRefreshPreferences = async () => {
-    setIsSummarizing(true);
-    setSummarizedPreferences(null);
-    try {
-      const libraryContent = books.map(b => `${b.title} by ${b.author}`).join('\n');
-      const result = await summarizeLibrary({ books: libraryContent });
-      
-      const prefText = `${result.summary} Top genres include ${result.genres.join(', ')}. Common themes are ${result.themes.join(', ')}.`;
-      setUserPreferences(prefText);
-      setSummarizedPreferences(result);
-
-      toast({
-        title: "Preferences Refreshed",
-        description: "We've analyzed your library and updated your preferences.",
-      })
-    } catch (error) {
-       console.error(error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to refresh preferences.",
-      });
-    } finally {
-      setIsSummarizing(false);
-    }
-  };
-
-  useEffect(() => {
-    if (books.length > 0) {
-      handleRefreshPreferences();
-    } else {
-      setUserPreferences("");
-      setSummarizedPreferences(null);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [books.length]);
-
-
   const handleGenerateRecommendations = async (preferences: string) => {
-    setUserPreferences(preferences);
+    
+    // Combine summary with user's manual input
+    const finalPreferences = [summarizedPreferences?.summary, preferences].filter(Boolean).join('\n\n');
+
     setIsGenerating(true);
     setInitialRecommendations("");
     setChatHistory([]);
+
     try {
-      const result = await generateBookRecommendations({ preferences });
+      const result = await generateBookRecommendations({ preferences: finalPreferences });
       setInitialRecommendations(result.recommendations);
       setChatHistory([
         {
           id: Date.now(),
           role: "assistant",
           content:
-            "I've generated some initial recommendations for you. Feel free to ask me to refine them!",
+            "I've generated some initial recommendations for you based on your library and preferences. Feel free to ask me to refine them!",
           recommendations: result.recommendations,
         },
       ]);
@@ -157,10 +169,12 @@ export default function Home() {
       const formattedChatHistory = newHistory
         .map((m) => `${m.role}: ${m.content}`)
         .join("\n");
+      
+      const fullPreferences = [summarizedPreferences?.summary, userPreferences].filter(Boolean).join('\n\n');
 
       const result = await refineRecommendationsViaChatbot({
         bookDetails,
-        userPreferences,
+        userPreferences: fullPreferences,
         chatHistory: formattedChatHistory,
         userInput,
       });
@@ -190,6 +204,18 @@ export default function Home() {
     }
   };
 
+  const handleNextFromLibrary = () => {
+    if(books.length > 0) {
+      setActiveTab('preferences');
+    } else {
+       toast({
+        variant: "destructive",
+        title: "Empty Library",
+        description: "Add at least one book to continue.",
+      });
+    }
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       <Header />
@@ -197,7 +223,7 @@ export default function Home() {
         <Tabs
           value={activeTab}
           onValueChange={setActiveTab}
-          className="w-full max-w-4xl"
+          className="w-full max-w-5xl"
         >
           <div className="flex justify-center">
             <TabsList className="grid w-full grid-cols-3 max-w-lg">
@@ -209,14 +235,20 @@ export default function Home() {
               </TabsTrigger>
               <TabsTrigger
                 value="chatbot"
-                disabled={books.length === 0 || userPreferences === ""}
+                disabled={!summarizedPreferences}
               >
                 <Bot className="mr-2" /> Chatbot
               </TabsTrigger>
             </TabsList>
           </div>
           <TabsContent value="library">
-            <BookLibrary books={books} onAddBook={handleAddBook} onRemoveBook={handleRemoveBook} onClearLibrary={handleClearLibrary} onNext={() => setActiveTab('preferences')} />
+            <BookLibrary 
+              books={books} 
+              onAddBook={handleAddBook} 
+              onRemoveBook={handleRemoveBook} 
+              onClearLibrary={handleClearLibrary} 
+              onNext={handleNextFromLibrary} 
+            />
           </TabsContent>
           <TabsContent value="preferences">
             <PreferenceTool
@@ -234,7 +266,7 @@ export default function Home() {
               chatHistory={chatHistory}
               onSendMessage={handleSendMessage}
               isLoading={isChatting}
-              isReady={books.length > 0 && userPreferences !== ""}
+              isReady={!!summarizedPreferences}
             />
           </TabsContent>
         </Tabs>

@@ -11,6 +11,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import type { SummarizeLibraryOutput } from "@/ai/flows/summarize-library";
+import { Badge } from "../ui/badge";
 
 interface PreferenceToolProps {
   onGenerateRecommendations: (preferences: string) => void;
@@ -34,8 +35,13 @@ export function PreferenceTool({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (preferences.trim()) {
-      onGenerateRecommendations(preferences);
+    // Use the AI summary as a base if the user hasn't typed anything
+    const prefsToGenerate = preferences.trim() 
+      ? preferences
+      : summarizedPreferences?.summary || "";
+    
+    if (prefsToGenerate) {
+      onGenerateRecommendations(prefsToGenerate);
     }
   };
 
@@ -62,49 +68,66 @@ export function PreferenceTool({
           </Button>
         </CardTitle>
         <CardDescription>
-          We've analyzed your library to guess your preferences. Feel free to
-          edit them before getting recommendations.
+          Here is the AI's analysis of your library. You can add more details below before generating recommendations.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {summarizedPreferences && (
-          <div className="space-y-4 rounded-lg border bg-muted/50 p-4">
-            <p className="font-semibold text-center italic text-foreground">
-              {summarizedPreferences.summary}
+        {isSummarizing ? (
+            <div className="space-y-4 rounded-lg border bg-muted/50 p-4 animate-pulse">
+                <div className="h-5 w-3/4 rounded bg-muted-foreground/20"></div>
+                 <div className="flex flex-wrap gap-2">
+                    <div className="h-6 w-24 rounded-full bg-muted-foreground/20"></div>
+                    <div className="h-6 w-32 rounded-full bg-muted-foreground/20"></div>
+                 </div>
+                  <div className="flex flex-wrap gap-2">
+                    <div className="h-6 w-28 rounded-full bg-muted-foreground/20"></div>
+                    <div className="h-6 w-20 rounded-full bg-muted-foreground/20"></div>
+                 </div>
+            </div>
+        ) : summarizedPreferences && summarizedPreferences.summary && (
+          <div className="space-y-4 rounded-lg border-2 border-accent/30 bg-accent/10 p-6 shadow-inner">
+            <p className="font-semibold text-center italic text-accent-foreground/90">
+              &quot;{summarizedPreferences.summary}&quot;
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-3 pt-3">
               <div>
-                <h4 className="font-headline flex items-center gap-2 mb-2"><BookCheck /> Preferred Genres</h4>
-                <ul className="list-disc list-inside space-y-1 text-sm">
+                <h4 className="font-headline flex items-center gap-2 mb-2 text-sm uppercase tracking-wider text-muted-foreground"><BookCheck /> Preferred Genres</h4>
+                <div className="flex flex-wrap gap-2">
                   {summarizedPreferences.genres.map((genre) => (
-                    <li key={genre}>{genre}</li>
+                    <Badge key={genre} variant="outline" className="border-accent text-accent-foreground bg-accent/20 text-sm">
+                      {genre}
+                    </Badge>
                   ))}
-                </ul>
+                </div>
               </div>
                <div>
-                <h4 className="font-headline flex items-center gap-2 mb-2"><Tags /> Common Themes</h4>
-                <ul className="list-disc list-inside space-y-1 text-sm">
+                <h4 className="font-headline flex items-center gap-2 mb-2 text-sm uppercase tracking-wider text-muted-foreground"><Tags /> Common Themes</h4>
+                <div className="flex flex-wrap gap-2">
                   {summarizedPreferences.themes.map((theme) => (
-                    <li key={theme}>{theme}</li>
+                     <Badge key={theme} variant="outline" className="border-accent text-accent-foreground bg-accent/20 text-sm">
+                      {theme}
+                    </Badge>
                   ))}
-                </ul>
+                </div>
               </div>
             </div>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+          <label htmlFor="preferences-textarea" className="font-headline text-muted-foreground">Add more details (optional)</label>
           <Textarea
-            placeholder="e.g., I love science fiction, especially cyberpunk. My favorite authors are William Gibson and Philip K. Dick. I recently enjoyed 'Dune'."
+            id="preferences-textarea"
+            placeholder="e.g., 'I'm in the mood for something fast-paced' or 'Suggest books similar to Project Hail Mary'."
             value={preferences}
             onChange={(e) => setPreferences(e.target.value)}
-            className="min-h-[150px]"
+            className="min-h-[100px]"
             disabled={isSummarizing}
           />
           <Button
             type="submit"
             className="w-full"
-            disabled={isLoading || isSummarizing || !preferences.trim()}
+            disabled={isLoading || isSummarizing}
             suppressHydrationWarning
           >
             {isLoading ? "Generating..." : "Get Recommendations & Chat"}

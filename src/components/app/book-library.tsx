@@ -27,6 +27,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Separator } from "../ui/separator";
 
 interface BookLibraryProps {
   books: BookType[];
@@ -74,93 +75,92 @@ export function BookLibrary({ books, onAddBook, onRemoveBook, onClearLibrary, on
           add, the smarter the AI becomes.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <form onSubmit={handleSearch} className="flex items-center gap-2">
-          <Input
-            placeholder="Search for a book..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            suppressHydrationWarning
-          />
-          <Button type="submit" disabled={isSearching} size="icon" suppressHydrationWarning>
-            {isSearching ? (
-              <Loader2 className="animate-spin" />
-            ) : (
-              <Search />
-            )}
-          </Button>
-        </form>
+      <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="space-y-6">
+          <h3 className="text-lg font-medium font-headline">Find Books</h3>
+          <form onSubmit={handleSearch} className="flex items-center gap-2">
+            <Input
+              placeholder="Search for a book..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              suppressHydrationWarning
+            />
+            <Button type="submit" disabled={isSearching} size="icon" suppressHydrationWarning>
+              {isSearching ? (
+                <Loader2 className="animate-spin" />
+              ) : (
+                <Search />
+              )}
+            </Button>
+          </form>
 
-        {isSearching && (
-           <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">Searching...</p>
-           </div>
-        )}
-        
-        {searchResults.length > 0 && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium font-headline">Search Results</h3>
-            <ScrollArea className="h-60 pr-4">
-              <div className="space-y-2">
-                {searchResults.map((book) => (
-                  <div
-                    key={book.title + book.author}
-                    className="p-3 border rounded-md bg-muted/50 flex items-center justify-between gap-2"
-                  >
-                    <div className="flex-grow">
-                      <p className="font-semibold">{book.title}</p>
-                      <p className="text-sm text-muted-foreground">
-                        by {book.author}
-                      </p>
-                    </div>
-                    <Button
-                      size="sm"
-                      onClick={() =>
-                        onAddBook({
-                          title: book.title,
-                          author: book.author,
-                          description: book.description,
-                        })
-                      }
-                      suppressHydrationWarning
+          {(isSearching || searchResults.length > 0) && (
+            <div className="space-y-4">
+              <h3 className="text-base font-medium font-headline">Search Results</h3>
+               {isSearching && <p className="text-sm text-muted-foreground">Searching...</p>}
+              <ScrollArea className="h-60 pr-4">
+                <div className="space-y-2">
+                  {searchResults.map((book) => (
+                    <div
+                      key={book.title + book.author}
+                      className="p-3 border rounded-md bg-muted/50 flex items-center justify-between gap-2"
                     >
-                      <Plus className="mr-2" /> Add
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
-          </div>
-        )}
-
-
-        {books.length > 0 && (
-          <div className="space-y-4 pt-4 border-t">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-medium font-headline">Added Books</h3>
-               <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="outline" size="sm" suppressHydrationWarning>
-                      <XCircle className="mr-2" /> Clear Library
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This will permanently remove all books from your library.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={onClearLibrary}>
-                        Clear Library
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                      <div className="flex-grow">
+                        <p className="font-semibold">{book.title}</p>
+                        <p className="text-sm text-muted-foreground">
+                          by {book.author}
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={() =>
+                          onAddBook({
+                            title: book.title,
+                            author: book.author,
+                            description: book.description,
+                          })
+                        }
+                        suppressHydrationWarning
+                      >
+                        <Plus className="mr-2" /> Add
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
             </div>
-            <ScrollArea className="h-48 pr-4">
+          )}
+        </div>
+
+        <div className="space-y-6 md:border-l md:pl-8">
+           <div className="flex justify-between items-center">
+              <h3 className="text-lg font-medium font-headline">Added Books ({books.length})</h3>
+               {books.length > 0 && (
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="outline" size="sm" suppressHydrationWarning>
+                        <XCircle className="mr-2" /> Clear Library
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will permanently remove all books from your library.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={onClearLibrary}>
+                          Clear Library
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+               )}
+            </div>
+          {books.length > 0 ? (
+            <ScrollArea className="h-[21rem] pr-4">
               <div className="space-y-2">
                 {books.map((book) => (
                   <div
@@ -184,13 +184,19 @@ export function BookLibrary({ books, onAddBook, onRemoveBook, onClearLibrary, on
                 ))}
               </div>
             </ScrollArea>
-          </div>
-        )}
+          ) : (
+            <div className="h-[21rem] flex flex-col items-center justify-center text-center rounded-lg border-2 border-dashed border-muted-foreground/30">
+                <BookIcon className="size-10 text-muted-foreground/50 mb-2"/>
+                <p className="text-muted-foreground">Your library is empty.</p>
+                <p className="text-sm text-muted-foreground/80">Search for books to get started.</p>
+            </div>
+          )}
+        </div>
       </CardContent>
        {books.length > 0 && (
-        <CardFooter>
+        <CardFooter className="border-t pt-6 mt-8">
           <Button onClick={onNext} className="ml-auto">
-            Next <ArrowRight className="ml-2" />
+            Next: Set Preferences <ArrowRight className="ml-2" />
           </Button>
         </CardFooter>
       )}
