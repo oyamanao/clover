@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { LogIn, LogOut, User as UserIcon, Loader2 } from 'lucide-react';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 export function UserNav() {
@@ -39,7 +39,11 @@ export function UserNav() {
         photoURL: user.photoURL,
       }, { merge: true });
 
-    } catch (error) {
+    } catch (error: any) {
+      // Don't log an error if the user cancels the popup
+      if (error.code === 'auth/cancelled-popup-request') {
+        return;
+      }
       console.error('Error during sign-in:', error);
     }
   };
