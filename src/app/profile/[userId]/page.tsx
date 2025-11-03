@@ -22,7 +22,8 @@ export default function ProfilePage({ params: paramsPromise }: { params: Promise
   const { data: profileUser, isLoading: isProfileLoading } = useDoc(userRef);
 
   const privateListsQuery = useMemoFirebase(() => {
-    if (!firestore || !userId || currentUser?.uid !== userId) return null;
+    // Only fetch private lists if the current user is viewing their own profile
+    if (!firestore || !userId || !currentUser || currentUser.uid !== userId) return null;
     return query(collection(firestore, `users/${userId}/book_lists`));
   }, [firestore, userId, currentUser]);
 
@@ -37,13 +38,15 @@ export default function ProfilePage({ params: paramsPromise }: { params: Promise
   const bookLists = useMemo(() => {
     return [...(privateLists || []), ...(publicLists || [])];
   }, [privateLists, publicLists]);
-  const isLoadingLists = isLoadingPrivate || isLoadingPublic;
+  
+  // Loading is true if we are still waiting for public lists OR if we are supposed to be loading private lists but haven't finished.
+  const isLoadingLists = isLoadingPublic || (currentUser?.uid === userId && isLoadingPrivate);
   
   const isOwnProfile = useMemo(() => {
     return currentUser?.uid === userId;
   }, [currentUser, userId]);
 
-  if (isUserLoading || isProfileLoading) {
+  if (isUserLoading || (isProfileLoading && !profileUser)) {
     return (
         <div className="flex h-screen w-full items-center justify-center bg-background">
             <Loader2 className="animate-spin text-accent size-12" />
