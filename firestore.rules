@@ -3,7 +3,7 @@
  *
  * Core Philosophy:
  * This ruleset enforces a strict user-ownership model for user profiles and private book lists.
- * Public book lists are readable by anyone, but writable only by their owners.
+ * Public book lists are readable by anyone, but writable only by their owners, with an exception for "likes".
  *
  * Data Structure:
  * - /users/{userId}: User profile data.
@@ -13,11 +13,10 @@
  * Key Security Decisions:
  * - Users can only read and write their own profile data.
  * - Users can only read and write their own private book lists.
- * - Public book lists are readable by anyone but only writable by their owners.
+ * - Public book lists are readable by anyone.
+ * - Any authenticated user can "like" a public list (updating the `likes` field).
+ * - Only the owner can create, delete, or modify other fields of a public list.
  * - Listing of user documents is disallowed.
- *
- * Denormalization for Authorization:
- * The `userId` field within the BookList document (in both private and public collections) is used to enforce ownership.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -26,12 +25,6 @@ service cloud.firestore {
     /**
      * @description Enforces user-ownership for user profile data.
      * @path /users/{userId}
-     * @allow (create) User with ID 'user123' can create their own profile.
-     * @allow (get) User with ID 'user123' can read their own profile.
-     * @allow (update) User with ID 'user123' can update their own profile.
-     * @allow (delete) User with ID 'user123' can delete their own profile.
-     * @deny (create) User with ID 'user456' cannot create a profile for 'user123'.
-     * @principle Enforces document ownership for writes.
      */
     match /users/{userId} {
       function isOwner() {
@@ -44,12 +37,6 @@ service cloud.firestore {
     /**
      * @description Enforces user-ownership for private book lists stored under a user's profile.
      * @path /users/{userId}/book_lists/{bookListId}
-     * @allow (create) User with ID 'user123' can create a book list under their profile.
-     * @allow (get) User with ID 'user123' can read a book list under their profile.
-     * @allow (update) User with ID 'user123' can update a book list under their profile.
-     * @allow (delete) User with ID 'user123' can delete a book list under their profile.
-     * @deny (create) User with ID 'user456' cannot create a book list under 'user123's profile.
-     * @principle Restricts access to a user's own data tree.
      */
     match /users/{userId}/book_lists/{bookListId} {
       function isOwner() {
@@ -59,23 +46,40 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows public read access to public book lists while restricting write access to the owner.
+     * @description Allows public read access to public book lists.
+     * Write access is restricted: only owners can perform most writes, but any authenticated user can "like" a list.
      * @path /public_book_lists/{bookListId}
-     * @allow (get) Anyone can read a public book list.
-     * @allow (list) Anyone can list public book lists.
-     * @allow (create) User with ID 'user123' can create a public book list with userId 'user123'.
-     * @allow (update) User with ID 'user123' can update a public book list they own.
-     * @deny (create) User with ID 'user123' cannot create a public book list with userId 'user456'.
-     * @deny (update) User with ID 'user456' cannot update a public book list owned by 'user123'.
-     * @principle Enforces document ownership for writes while allowing public read access.
      */
     match /public_book_lists/{bookListId} {
       function isOwner() {
         return request.auth.uid == resource.data.userId;
       }
+
+      function isIncomingDataOwner() {
+        return request.auth.uid == request.resource.data.userId;
+      }
+
+      function isLiking() {
+        let incomingKeys = request.resource.data.keys();
+        let existingKeys = resource.data.keys();
+        return incomingKeys.hasAll(['likes']) && !incomingKeys.hasAny(['name', 'description', 'isPublic', 'books', 'userId', 'userName', 'userPhotoURL', 'createdAt'])
+               && request.resource.data.likes == resource.data.likes + 1;
+      }
+      
+      function canUpdate() {
+        if (isOwner()) {
+          return true;
+        }
+        if (request.auth != null && isLiking()) {
+          return true;
+        }
+        return false;
+      }
+
       allow read: if true;
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
-      allow update, delete: if request.auth != null && isOwner();
+      allow create: if request.auth != null && isIncomingDataOwner();
+      allow update: if request.auth != null && canUpdate();
+      allow delete: if request.auth != null && isOwner();
     }
   }
 }
