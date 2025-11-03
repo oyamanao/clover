@@ -189,7 +189,7 @@ export function BookLibrary({ books, onAddBook, onAddMultipleBooks, onRemoveBook
           <BookIcon className="size-6" /> Your Book Library
         </CardTitle>
         <CardDescription>
-          Welcome to the Book Verse. Search for books to add to your reading history. The more books you
+          Search for books to add to your reading history. The more books you
           add, the smarter the AI becomes.
         </CardDescription>
       </CardHeader>

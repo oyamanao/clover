@@ -6,7 +6,7 @@ import { FloatingNavWrapper } from "@/components/app/floating-nav-wrapper";
 
 export const metadata: Metadata = {
   title: "Clover AI",
-  description: "Welcome to the Book Verse. Your AI-powered guide to the world of books.",
+  description: "Your AI-powered guide to the world of books.",
 };
 
 export default function RootLayout({

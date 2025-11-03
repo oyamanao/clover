@@ -68,7 +68,7 @@ export default function WelcomePage() {
                         Clover AI
                     </h1>
                     <p className="text-lg text-muted-foreground mt-2">
-                        Welcome to the Book Verse. Your AI-powered guide to the world of books.
+                        Your AI-powered guide to the world of books.
                     </p>
                 </div>
                 <Button onClick={handleSignIn} size="lg">
