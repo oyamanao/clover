@@ -1,7 +1,12 @@
-import { Clover } from "lucide-react";
+'use client';
+
+import { Clover, PlusCircle } from "lucide-react";
 import { UserNav } from "@/components/app/user-nav";
+import { Button } from "../ui/button";
+import { useFirebase } from "@/firebase";
 
 export function Header() {
+  const { user } = useFirebase();
   return (
     <header className="border-b bg-card shadow-sm">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
@@ -14,7 +19,15 @@ export function Header() {
             <p className="text-sm text-muted-foreground">Your AI-powered guide to the world of books.</p>
           </div>
         </div>
-        <UserNav />
+        <div className="flex items-center gap-4">
+          {user && (
+            <Button variant="outline">
+              <PlusCircle className="mr-2" />
+              Create new list
+            </Button>
+          )}
+          <UserNav />
+        </div>
       </div>
     </header>
   );
