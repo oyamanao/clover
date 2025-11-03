@@ -33,7 +33,9 @@ export default function ProfilePage({ params }: { params: { userId: string } }) 
   const { data: privateLists, isLoading: isLoadingPrivate } = useCollection(privateListsQuery);
   const { data: publicLists, isLoading: isLoadingPublic } = useCollection(publicListsQuery);
 
-  const bookLists = [...(privateLists || []), ...(publicLists || [])];
+  const bookLists = useMemo(() => {
+    return [...(privateLists || []), ...(publicLists || [])];
+  }, [privateLists, publicLists]);
   const isLoadingLists = isLoadingPrivate || isLoadingPublic;
   
   const isOwnProfile = useMemo(() => {
