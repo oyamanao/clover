@@ -3,7 +3,7 @@
 
 import { useState, useMemo } from "react";
 import Image from "next/image";
-import { Plus, Book as BookIcon, Search, Loader2, Trash2, XCircle, ArrowRight, BookImage, ChevronDown, Library, PlusCircle } from "lucide-react";
+import { Plus, Book as BookIcon, Search, Loader2, Trash2, XCircle, ArrowRight, BookImage, ChevronDown, Library, PlusCircle, Check } from "lucide-react";
 import type { Book as BookType, BookSearchResult } from "@/lib/types";
 import {
   Card,
@@ -222,7 +222,9 @@ export function BookLibrary({ books, onAddBook, onAddMultipleBooks, onRemoveBook
                {isSearching && <p className="text-sm text-muted-foreground">Searching...</p>}
               <ScrollArea className="h-60 pr-4">
                 <div className="space-y-2">
-                  {searchResults.map((book) => (
+                  {searchResults.map((book) => {
+                    const isAdded = books.some(b => b.title === book.title && b.author === book.author);
+                    return (
                     <div
                       key={book.title + book.author}
                       className="p-3 border rounded-md bg-muted/50 flex items-start gap-4"
@@ -239,23 +241,30 @@ export function BookLibrary({ books, onAddBook, onAddMultipleBooks, onRemoveBook
                         <p className="text-sm text-muted-foreground">
                           by {book.author}
                         </p>
-                         <Button
-                          size="sm"
-                          onClick={() =>
-                            onAddBook({
-                              title: book.title,
-                              author: book.author,
-                              description: book.description,
-                              imageUrl: book.imageUrl
-                            })
-                          }
-                          className="mt-2"
-                        >
-                          <Plus className="mr-2" /> Add
-                        </Button>
+                         {isAdded ? (
+                            <Button size="sm" disabled className="mt-2">
+                                <Check className="mr-2" /> Added
+                            </Button>
+                        ) : (
+                            <Button
+                            size="sm"
+                            onClick={() =>
+                                onAddBook({
+                                title: book.title,
+                                author: book.author,
+                                description: book.description,
+                                imageUrl: book.imageUrl
+                                })
+                            }
+                            className="mt-2"
+                            >
+                            <Plus className="mr-2" /> Add
+                            </Button>
+                        )}
                       </div>
                     </div>
-                  ))}
+                  );
+                })}
                 </div>
               </ScrollArea>
             </div>
