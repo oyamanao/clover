@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, use } from 'react';
 import { useFirebase, useMemoFirebase } from '@/firebase';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -11,24 +11,25 @@ import { doc, collection, query, where } from 'firebase/firestore';
 import { useDoc, useCollection } from '@/firebase';
 import Link from 'next/link';
 
-export default function ProfilePage({ params }: { params: { userId: string } }) {
+export default function ProfilePage({ params: paramsPromise }: { params: Promise<{ userId: string }> }) {
+  const { userId } = use(paramsPromise);
   const { firestore, user: currentUser, isUserLoading } = useFirebase();
 
   const userRef = useMemoFirebase(() => {
-    if (!firestore || !params.userId) return null;
-    return doc(firestore, 'users', params.userId);
-  }, [firestore, params]);
+    if (!firestore || !userId) return null;
+    return doc(firestore, 'users', userId);
+  }, [firestore, userId]);
   const { data: profileUser, isLoading: isProfileLoading } = useDoc(userRef);
 
   const privateListsQuery = useMemoFirebase(() => {
-    if (!firestore || !params.userId || currentUser?.uid !== params.userId) return null;
-    return query(collection(firestore, `users/${params.userId}/book_lists`));
-  }, [firestore, params, currentUser]);
+    if (!firestore || !userId || currentUser?.uid !== userId) return null;
+    return query(collection(firestore, `users/${userId}/book_lists`));
+  }, [firestore, userId, currentUser]);
 
   const publicListsQuery = useMemoFirebase(() => {
-    if (!firestore || !params.userId) return null;
-    return query(collection(firestore, 'public_book_lists'), where('userId', '==', params.userId));
-  }, [firestore, params]);
+    if (!firestore || !userId) return null;
+    return query(collection(firestore, 'public_book_lists'), where('userId', '==', userId));
+  }, [firestore, userId]);
 
   const { data: privateLists, isLoading: isLoadingPrivate } = useCollection(privateListsQuery);
   const { data: publicLists, isLoading: isLoadingPublic } = useCollection(publicListsQuery);
@@ -39,8 +40,8 @@ export default function ProfilePage({ params }: { params: { userId: string } }) 
   const isLoadingLists = isLoadingPrivate || isLoadingPublic;
   
   const isOwnProfile = useMemo(() => {
-    return currentUser?.uid === params.userId;
-  }, [currentUser, params]);
+    return currentUser?.uid === userId;
+  }, [currentUser, userId]);
 
   if (isUserLoading || isProfileLoading) {
     return (
