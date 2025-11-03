@@ -5,14 +5,17 @@ import { useFirebase, useMemoFirebase } from '@/firebase';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, User as UserIcon, Book, PlusCircle, Heart } from 'lucide-react';
+import { Loader2, User as UserIcon, Book, PlusCircle, Heart, LogOut } from 'lucide-react';
 import { doc, collection, query, where } from 'firebase/firestore';
 import { useDoc, useCollection } from '@/firebase';
 import Link from 'next/link';
+import { signOut } from 'firebase/auth';
+import { useRouter } from 'next/navigation';
 
 export default function ProfilePage({ params: paramsPromise }: { params: Promise<{ userId: string }> }) {
   const { userId } = use(paramsPromise);
-  const { firestore, user: currentUser, isUserLoading } = useFirebase();
+  const { firestore, auth, user: currentUser, isUserLoading } = useFirebase();
+  const router = useRouter();
 
   const profileUserRef = useMemoFirebase(() => {
     if (!firestore || !userId) return null;
@@ -48,6 +51,16 @@ export default function ProfilePage({ params: paramsPromise }: { params: Promise
   const isLoading = isProfileLoading;
   
   const isLoadingLists = isLoadingPublic || (isOwnProfile && isLoadingPrivate);
+
+  const handleSignOut = async () => {
+    if (!auth) return;
+    try {
+      await signOut(auth);
+      router.push('/welcome');
+    } catch (error) {
+      console.error('Error during sign-out:', error);
+    }
+  };
   
   if (isLoading) {
     return (
@@ -83,10 +96,15 @@ export default function ProfilePage({ params: paramsPromise }: { params: Promise
                 {profileUser.displayName ? profileUser.displayName.charAt(0) : <UserIcon />}
                 </AvatarFallback>
             </Avatar>
-            <div>
+            <div className="flex-grow">
                 <h1 className="text-4xl font-headline font-bold">{profileUser.displayName}</h1>
                 <p className="text-lg text-muted-foreground">{profileUser.email}</p>
             </div>
+             {isOwnProfile && (
+                <Button onClick={handleSignOut} variant="outline">
+                    <LogOut className="mr-2" /> Log Out
+                </Button>
+            )}
             </div>
         )}
 
