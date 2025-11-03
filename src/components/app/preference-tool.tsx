@@ -90,7 +90,7 @@ export function PreferenceTool({
                 <h4 className="font-headline flex items-center gap-2 mb-2 text-sm uppercase tracking-wider text-muted-foreground/70"><BookCheck /> Preferred Genres</h4>
                 <div className="flex flex-wrap gap-2">
                   {summarizedPreferences.genres.map((genre) => (
-                    <Badge key={genre} variant="outline" className="border-accent text-accent-foreground bg-transparent text-sm">
+                    <Badge key={genre} variant="outline" className="border-accent text-accent bg-transparent text-sm">
                       {genre}
                     </Badge>
                   ))}
@@ -100,7 +100,7 @@ export function PreferenceTool({
                 <h4 className="font-headline flex items-center gap-2 mb-2 text-sm uppercase tracking-wider text-muted-foreground/70"><Tags /> Common Themes</h4>
                 <div className="flex flex-wrap gap-2">
                   {summarizedPreferences.themes.map((theme) => (
-                     <Badge key={theme} variant="outline" className="border-accent text-accent-foreground bg-transparent text-sm">
+                     <Badge key={theme} variant="outline" className="border-accent text-accent bg-transparent text-sm">
                       {theme}
                     </Badge>
                   ))}
