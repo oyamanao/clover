@@ -11,3 +11,9 @@ export interface ChatMessage {
   content: string;
   recommendations?: string;
 }
+
+export interface BookSearchResult {
+  title: string;
+  author: string;
+  description: string;
+}

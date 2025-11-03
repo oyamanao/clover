@@ -15,7 +15,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { Book, Bot, Sparkles } from "lucide-react";
+import { Book as BookIcon, Bot, Sparkles } from "lucide-react";
 
 export default function Home() {
   const [books, setBooks] = useState<Book[]>([]);
@@ -29,6 +29,15 @@ export default function Home() {
   const { toast } = useToast();
 
   const handleAddBook = (book: Omit<Book, "id">) => {
+    // Check if book is already in the library
+    if (books.find((b) => b.title === book.title && b.author === book.author)) {
+      toast({
+        variant: "destructive",
+        title: "Book Already in Library",
+        description: `"${book.title}" is already in your library.`,
+      });
+      return;
+    }
     setBooks((prev) => [...prev, { ...book, id: Date.now() }]);
     toast({
       title: "Book Added",
@@ -122,59 +131,44 @@ export default function Home() {
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       <Header />
       <main className="flex-grow container mx-auto p-4 md:p-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 w-full">
-          <div className="lg:col-span-1">
-            <Tabs
-              value={activeTab}
-              onValueChange={setActiveTab}
-              className="w-full"
-            >
-              <TabsList className="grid w-full grid-cols-1">
-                <TabsTrigger value="library">
-                  <Book className="mr-2" /> Library
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="library">
-                <BookLibrary books={books} onAddBook={handleAddBook} />
-              </TabsContent>
-            </Tabs>
-          </div>
-          <div className="lg:col-span-2">
-            <Tabs
-              value={activeTab}
-              onValueChange={setActiveTab}
-              className="w-full"
-            >
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger
-                  value="preferences"
-                  disabled={books.length === 0}
-                >
-                  <Sparkles className="mr-2" /> Preferences
-                </TabsTrigger>
-                <TabsTrigger
-                  value="chatbot"
-                  disabled={books.length === 0 || userPreferences === ""}
-                >
-                  <Bot className="mr-2" /> Chatbot
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="preferences">
-                <PreferenceTool
-                  onGenerateRecommendations={handleGenerateRecommendations}
-                  isLoading={isGenerating}
-                />
-              </TabsContent>
-              <TabsContent value="chatbot">
-                <RecommendationChatbot
-                  chatHistory={chatHistory}
-                  onSendMessage={handleSendMessage}
-                  isLoading={isChatting}
-                  isReady={books.length > 0 && userPreferences !== ""}
-                />
-              </TabsContent>
-            </Tabs>
-          </div>
+        <div className="flex justify-center">
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="w-full max-w-4xl"
+          >
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="library">
+                <BookIcon className="mr-2" /> Library
+              </TabsTrigger>
+              <TabsTrigger value="preferences" disabled={books.length === 0}>
+                <Sparkles className="mr-2" /> Preferences
+              </TabsTrigger>
+              <TabsTrigger
+                value="chatbot"
+                disabled={books.length === 0 || userPreferences === ""}
+              >
+                <Bot className="mr-2" /> Chatbot
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="library">
+              <BookLibrary books={books} onAddBook={handleAddBook} />
+            </TabsContent>
+            <TabsContent value="preferences">
+              <PreferenceTool
+                onGenerateRecommendations={handleGenerateRecommendations}
+                isLoading={isGenerating}
+              />
+            </TabsContent>
+            <TabsContent value="chatbot">
+              <RecommendationChatbot
+                chatHistory={chatHistory}
+                onSendMessage={handleSendMessage}
+                isLoading={isChatting}
+                isReady={books.length > 0 && userPreferences !== ""}
+              />
+            </TabsContent>
+          </Tabs>
         </div>
       </main>
     </div>
