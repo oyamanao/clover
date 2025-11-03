@@ -54,7 +54,7 @@ export function BookLibrary({ books, onAddBook }: BookLibraryProps) {
   }
 
   return (
-    <Card className="overflow-hidden mt-4">
+    <Card className="overflow-hidden">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 font-headline">
           <BookIcon className="size-6" /> Your Book Library
@@ -109,7 +109,7 @@ export function BookLibrary({ books, onAddBook }: BookLibraryProps) {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full" suppressHydrationWarning>
               <Plus className="mr-2 size-4" /> Add Book & Continue
             </Button>
           </form>
