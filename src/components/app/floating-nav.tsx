@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -23,6 +24,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
+import { cn } from '@/lib/utils';
 
 export function FloatingNav({ onHomepage }: { onHomepage: boolean }) {
   const { user, auth } = useFirebase();
@@ -50,9 +52,13 @@ export function FloatingNav({ onHomepage }: { onHomepage: boolean }) {
             <Button
               variant="outline"
               size="icon"
-              className="rounded-full h-12 w-12 bg-background/80 backdrop-blur-sm shadow-lg hover:bg-accent/90 transition-all"
+              className={cn(
+                "rounded-full h-12 w-12 bg-background/80 backdrop-blur-sm shadow-lg transition-all", 
+                "hover:bg-accent/90",
+                "data-[state=open]:bg-accent data-[state=open]:text-accent-foreground"
+                )}
             >
-              <Clover className="size-6 text-accent" />
+              <Clover className="size-6" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="start" forceMount>
