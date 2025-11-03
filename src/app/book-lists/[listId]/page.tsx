@@ -56,8 +56,8 @@ export default function BookListPage({ params: paramsPromise }: { params: Promis
     }, [firestore, user, listId]);
 
 
-    const { data: listData, isLoading: isLoadingPublic } = useDoc(listRef);
-    const { data: privateListData, isLoading: isLoadingPrivate } = useDoc(privateListRef);
+    const { data: listData, isLoading: isLoadingPublic, error: publicError } = useDoc(listRef);
+    const { data: privateListData, isLoading: isLoadingPrivate, error: privateError } = useDoc(privateListRef);
     
     const [finalListData, setFinalListData] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -67,33 +67,47 @@ export default function BookListPage({ params: paramsPromise }: { params: Promis
         const loadData = async () => {
             setIsLoading(true);
             let dataToShow = null;
-            let finalId = listId;
 
             if (listData) {
                 dataToShow = listData;
-                finalId = listData.id;
             } else if (privateListData) {
                 dataToShow = privateListData;
-                finalId = privateListData.id;
+            }
+
+            // If there's an error on the public fetch but we found a private list, ignore the public error.
+            if (publicError && !privateListData) {
+                 const permissionError = new FirestorePermissionError({
+                    path: `public_book_lists/${listId}`,
+                    operation: 'get',
+                });
+                errorEmitter.emit('permission-error', permissionError);
             }
 
             if (dataToShow) {
-                setFinalListData({...dataToShow, id: finalId});
+                setFinalListData(dataToShow);
                 // Fetch owner data
                 if (firestore && dataToShow.userId) {
                     const ownerRef = doc(firestore, 'users', dataToShow.userId);
-                    const ownerSnap = await getDoc(ownerRef);
-                    if (ownerSnap.exists()) {
-                        setListOwner(ownerSnap.data());
-                    } else {
-                        // If owner data isn't in users collection, maybe it's on the list
-                        if (dataToShow.userName) {
-                            setListOwner({
-                                uid: dataToShow.userId,
-                                displayName: dataToShow.userName,
-                                photoURL: null
-                            });
+                    try {
+                        const ownerSnap = await getDoc(ownerRef);
+                        if (ownerSnap.exists()) {
+                            setListOwner(ownerSnap.data());
+                        } else {
+                             // Fallback for owner data
+                            if (dataToShow.userName) {
+                                setListOwner({
+                                    uid: dataToShow.userId,
+                                    displayName: dataToShow.userName,
+                                    photoURL: null
+                                });
+                            }
                         }
+                    } catch (e) {
+                         const permissionError = new FirestorePermissionError({
+                            path: ownerRef.path,
+                            operation: 'get',
+                        });
+                        errorEmitter.emit('permission-error', permissionError);
                     }
                 }
             }
@@ -104,7 +118,7 @@ export default function BookListPage({ params: paramsPromise }: { params: Promis
         };
 
         loadData();
-    }, [listData, privateListData, isLoadingPublic, isLoadingPrivate, firestore, listId]);
+    }, [listData, privateListData, isLoadingPublic, isLoadingPrivate, publicError, firestore, listId]);
     
     const isOwner = user && finalListData && user.uid === finalListData.userId;
 
@@ -240,3 +254,5 @@ export default function BookListPage({ params: paramsPromise }: { params: Promis
         </div>
     );
 }
+
+    
