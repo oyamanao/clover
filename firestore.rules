@@ -60,13 +60,15 @@ service cloud.firestore {
       }
 
       function isLiking() {
+        // This function ensures that only the 'likes' field is being updated.
+        // It checks that the incoming data has exactly one key, and that key is 'likes'.
         let incomingKeys = request.resource.data.keys();
-        let existingKeys = resource.data.keys();
-        return incomingKeys.hasAll(['likes']) && !incomingKeys.hasAny(['name', 'description', 'isPublic', 'books', 'userId', 'userName', 'userPhotoURL', 'createdAt'])
-               && request.resource.data.likes == resource.data.likes + 1;
+        return incomingKeys.hasAll(['likes']) && incomingKeys.size() == 1;
       }
       
       function canUpdate() {
+        // An update is allowed if the user is the owner (can edit anything)
+        // or if they are authenticated and only performing a 'like' action.
         if (isOwner()) {
           return true;
         }
