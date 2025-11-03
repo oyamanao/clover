@@ -12,5 +12,7 @@ export function FloatingNavWrapper() {
     return null;
   }
 
-  return <FloatingNav />;
+  const onHomepage = pathname === '/';
+
+  return <FloatingNav onHomepage={onHomepage} />;
 }
