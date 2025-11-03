@@ -12,7 +12,7 @@ import Link from 'next/link';
 
 export default function ProfilePage({ params }: { params: { userId: string } }) {
   const { firestore, user: currentUser, isUserLoading } = useFirebase();
-  const userId = params.userId;
+  const { userId } = params;
 
   const userRef = useMemoFirebase(() => {
     if (!firestore || !userId) return null;
