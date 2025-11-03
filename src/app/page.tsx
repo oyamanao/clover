@@ -199,20 +199,22 @@ export default function Home() {
           onValueChange={setActiveTab}
           className="w-full max-w-4xl"
         >
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="library">
-              <BookIcon className="mr-2" /> Library
-            </TabsTrigger>
-            <TabsTrigger value="preferences" disabled={books.length === 0}>
-              <Sparkles className="mr-2" /> Preferences
-            </TabsTrigger>
-            <TabsTrigger
-              value="chatbot"
-              disabled={books.length === 0 || userPreferences === ""}
-            >
-              <Bot className="mr-2" /> Chatbot
-            </TabsTrigger>
-          </TabsList>
+          <div className="flex justify-center">
+            <TabsList className="grid w-full grid-cols-3 max-w-lg">
+              <TabsTrigger value="library">
+                <BookIcon className="mr-2" /> Library
+              </TabsTrigger>
+              <TabsTrigger value="preferences" disabled={books.length === 0}>
+                <Sparkles className="mr-2" /> Preferences
+              </TabsTrigger>
+              <TabsTrigger
+                value="chatbot"
+                disabled={books.length === 0 || userPreferences === ""}
+              >
+                <Bot className="mr-2" /> Chatbot
+              </TabsTrigger>
+            </TabsList>
+          </div>
           <TabsContent value="library">
             <BookLibrary books={books} onAddBook={handleAddBook} onRemoveBook={handleRemoveBook} onClearLibrary={handleClearLibrary} onNext={() => setActiveTab('preferences')} />
           </TabsContent>
