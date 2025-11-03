@@ -26,7 +26,7 @@ export type GenerateBookRecommendationsInput = z.infer<typeof GenerateBookRecomm
 const GenerateBookRecommendationsOutputSchema = z.object({
   recommendations: z
     .string()
-    .describe('A list of book recommendations based on the user’s preferences.'),
+    .describe('A list of 3-5 book recommendations based on the user’s preferences. For each recommendation, provide a title, author, and a reason for the recommendation. Separate each recommendation with a newline.'),
 });
 export type GenerateBookRecommendationsOutput = z.infer<typeof GenerateBookRecommendationsOutputSchema>;
 
@@ -40,11 +40,17 @@ const prompt = ai.definePrompt({
   name: 'generateBookRecommendationsPrompt',
   input: {schema: GenerateBookRecommendationsInputSchema},
   output: {schema: GenerateBookRecommendationsOutputSchema},
-  prompt: `You are a book recommendation expert. A user will provide their reading preferences and you will give them a list of books that they might enjoy.  Make sure to explain why each book is recommended based on the user's stated preferences.
+  prompt: `You are a book recommendation expert. A user will provide their reading preferences and you will give them a list of 3-5 books that they might enjoy. 
+
+For each book, provide the following details formatted exactly like this:
+**Title:** [Book Title]
+**Author:** [Author Name]
+**Reason:** [Explain why this book is a good match based on the user's preferences]
+
+Separate each book recommendation with two newlines.
 
 User Preferences: {{{preferences}}}
-
-Recommendations:`, // Changed to Recommendations
+`,
 });
 
 const generateBookRecommendationsFlow = ai.defineFlow(

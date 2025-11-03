@@ -8,7 +8,7 @@ import { RecommendationChatbot } from "@/components/app/recommendation-chatbot";
 import { Header } from "@/components/app/header";
 import { generateBookRecommendations } from "@/ai/flows/generate-book-recommendations";
 import { refineRecommendationsViaChatbot } from "@/ai/flows/refine-recommendations-via-chatbot";
-import { summarizeLibrary } from "@/ai/flows/summarize-library";
+import { summarizeLibrary, type SummarizeLibraryOutput } from "@/ai/flows/summarize-library";
 import { useToast } from "@/hooks/use-toast";
 import {
   Tabs,
@@ -21,6 +21,7 @@ import { Book as BookIcon, Bot, Sparkles } from "lucide-react";
 export default function Home() {
   const [books, setBooks] = useState<Book[]>([]);
   const [userPreferences, setUserPreferences] = useState("");
+  const [summarizedPreferences, setSummarizedPreferences] = useState<SummarizeLibraryOutput | null>(null);
   const [initialRecommendations, setInitialRecommendations] = useState("");
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -45,7 +46,6 @@ export default function Home() {
       title: "Book Added",
       description: `"${book.title}" has been added to your library.`,
     });
-    setActiveTab("preferences");
   };
 
   const handleRemoveBook = (bookId: number) => {
@@ -59,12 +59,29 @@ export default function Home() {
     }
   };
   
+  const handleClearLibrary = () => {
+    setBooks([]);
+    setSummarizedPreferences(null);
+    setUserPreferences("");
+    setInitialRecommendations("");
+    setChatHistory([]);
+    toast({
+      title: "Library Cleared",
+      description: "All books have been removed from your library.",
+    });
+  };
+
   const handleRefreshPreferences = async () => {
     setIsSummarizing(true);
+    setSummarizedPreferences(null);
     try {
       const libraryContent = books.map(b => `${b.title} by ${b.author}`).join('\n');
       const result = await summarizeLibrary({ books: libraryContent });
-      setUserPreferences(result.preferences);
+      
+      const prefText = `${result.summary} Top genres include ${result.genres.join(', ')}. Common themes are ${result.themes.join(', ')}.`;
+      setUserPreferences(prefText);
+      setSummarizedPreferences(result);
+
       toast({
         title: "Preferences Refreshed",
         description: "We've analyzed your library and updated your preferences.",
@@ -86,6 +103,7 @@ export default function Home() {
       handleRefreshPreferences();
     } else {
       setUserPreferences("");
+      setSummarizedPreferences(null);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [books.length]);
@@ -196,7 +214,7 @@ export default function Home() {
             </TabsTrigger>
           </TabsList>
           <TabsContent value="library">
-            <BookLibrary books={books} onAddBook={handleAddBook} onRemoveBook={handleRemoveBook} />
+            <BookLibrary books={books} onAddBook={handleAddBook} onRemoveBook={handleRemoveBook} onClearLibrary={handleClearLibrary} onNext={() => setActiveTab('preferences')} />
           </TabsContent>
           <TabsContent value="preferences">
             <PreferenceTool
@@ -206,6 +224,7 @@ export default function Home() {
               setPreferences={setUserPreferences}
               onRefreshPreferences={handleRefreshPreferences}
               isSummarizing={isSummarizing}
+              summarizedPreferences={summarizedPreferences}
             />
           </TabsContent>
           <TabsContent value="chatbot">

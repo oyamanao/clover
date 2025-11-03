@@ -1,6 +1,6 @@
 "use client";
 
-import { RefreshCw, Sparkles, Loader2 } from "lucide-react";
+import { RefreshCw, Sparkles, Loader2, BookCheck, Tags } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import type { SummarizeLibraryOutput } from "@/ai/flows/summarize-library";
 
 interface PreferenceToolProps {
   onGenerateRecommendations: (preferences: string) => void;
@@ -18,6 +19,7 @@ interface PreferenceToolProps {
   setPreferences: (value: string) => void;
   onRefreshPreferences: () => void;
   isSummarizing: boolean;
+  summarizedPreferences: SummarizeLibraryOutput | null;
 }
 
 export function PreferenceTool({
@@ -27,6 +29,7 @@ export function PreferenceTool({
   setPreferences,
   onRefreshPreferences,
   isSummarizing,
+  summarizedPreferences,
 }: PreferenceToolProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -64,6 +67,32 @@ export function PreferenceTool({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {summarizedPreferences && (
+          <div className="space-y-4 rounded-lg border bg-muted/50 p-4">
+            <p className="font-semibold text-center italic text-foreground">
+              {summarizedPreferences.summary}
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <h4 className="font-headline flex items-center gap-2 mb-2"><BookCheck /> Preferred Genres</h4>
+                <ul className="list-disc list-inside space-y-1 text-sm">
+                  {summarizedPreferences.genres.map((genre) => (
+                    <li key={genre}>{genre}</li>
+                  ))}
+                </ul>
+              </div>
+               <div>
+                <h4 className="font-headline flex items-center gap-2 mb-2"><Tags /> Common Themes</h4>
+                <ul className="list-disc list-inside space-y-1 text-sm">
+                  {summarizedPreferences.themes.map((theme) => (
+                    <li key={theme}>{theme}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <Textarea
             placeholder="e.g., I love science fiction, especially cyberpunk. My favorite authors are William Gibson and Philip K. Dick. I recently enjoyed 'Dune'."

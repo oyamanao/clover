@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Book as BookIcon, Search, Loader2, Trash2 } from "lucide-react";
+import { Plus, Book as BookIcon, Search, Loader2, Trash2, XCircle, ArrowRight } from "lucide-react";
 import type { Book as BookType, BookSearchResult } from "@/lib/types";
 import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -15,14 +16,27 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { searchBooks } from "@/ai/flows/search-books";
 import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface BookLibraryProps {
   books: BookType[];
   onAddBook: (book: Omit<BookType, "id">) => void;
   onRemoveBook: (bookId: number) => void;
+  onClearLibrary: () => void;
+  onNext: () => void;
 }
 
-export function BookLibrary({ books, onAddBook, onRemoveBook }: BookLibraryProps) {
+export function BookLibrary({ books, onAddBook, onRemoveBook, onClearLibrary, onNext }: BookLibraryProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<BookSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -122,7 +136,30 @@ export function BookLibrary({ books, onAddBook, onRemoveBook }: BookLibraryProps
 
         {books.length > 0 && (
           <div className="space-y-4 pt-4 border-t">
-            <h3 className="text-lg font-medium font-headline">Added Books</h3>
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-medium font-headline">Added Books</h3>
+               <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" size="sm" suppressHydrationWarning>
+                      <XCircle className="mr-2" /> Clear Library
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will permanently remove all books from your library.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={onClearLibrary}>
+                        Clear Library
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+            </div>
             <ScrollArea className="h-48 pr-4">
               <div className="space-y-2">
                 {books.map((book) => (
@@ -150,6 +187,13 @@ export function BookLibrary({ books, onAddBook, onRemoveBook }: BookLibraryProps
           </div>
         )}
       </CardContent>
+       {books.length > 0 && (
+        <CardFooter>
+          <Button onClick={onNext} className="ml-auto">
+            Next <ArrowRight className="ml-2" />
+          </Button>
+        </CardFooter>
+      )}
     </Card>
   );
 }

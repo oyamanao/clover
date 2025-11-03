@@ -19,9 +19,12 @@ const SummarizeLibraryInputSchema = z.object({
 export type SummarizeLibraryInput = z.infer<typeof SummarizeLibraryInputSchema>;
 
 const SummarizeLibraryOutputSchema = z.object({
-  preferences: z.string().describe('A summary of the user’s likely reading preferences based on their library.'),
+    summary: z.string().describe("A single, concise sentence summarizing the user's overall reading taste."),
+    genres: z.array(z.string()).describe('A list of the most likely preferred genres.'),
+    themes: z.array(z.string()).describe('A list of common themes or topics the user seems to enjoy.'),
 });
 export type SummarizeLibraryOutput = z.infer<typeof SummarizeLibraryOutputSchema>;
+
 
 export async function summarizeLibrary(input: SummarizeLibraryInput): Promise<SummarizeLibraryOutput> {
   return summarizeLibraryFlow(input);
@@ -31,12 +34,16 @@ const prompt = ai.definePrompt({
   name: 'summarizeLibraryPrompt',
   input: { schema: SummarizeLibraryInputSchema },
   output: { schema: SummarizeLibraryOutputSchema },
-  prompt: `You are an expert literary analyst. Based on the following list of books from a user's library, infer their reading preferences. Describe the genres, themes, and styles they seem to enjoy.
+  prompt: `You are an expert literary analyst. Based on the following list of books from a user's library, infer their reading preferences. 
+
+- Provide a single, concise sentence that summarizes their overall taste.
+- Identify a list of their most likely preferred genres.
+- Identify a list of common themes or topics.
 
 User's Library:
 {{{books}}}
 
-Inferred Preferences:`,
+Respond in the requested structured format.`,
 });
 
 const summarizeLibraryFlow = ai.defineFlow(
@@ -47,7 +54,7 @@ const summarizeLibraryFlow = ai.defineFlow(
   },
   async (input) => {
     if (!input.books.trim()) {
-        return { preferences: "" };
+        return { summary: "", genres: [], themes: [] };
     }
     const { output } = await prompt(input);
     return output!;
