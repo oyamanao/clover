@@ -41,8 +41,6 @@ export default function Home() {
       return;
     }
     setIsSummarizing(true);
-    setSummarizedPreferences(null);
-    setUserPreferences("");
     try {
       const libraryContent = books.map(b => `${b.title} by ${b.author}`).join('\n');
       const result = await summarizeLibrary({ books: libraryContent });

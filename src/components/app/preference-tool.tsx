@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import type { SummarizeLibraryOutput } from "@/ai/flows/summarize-library";
 import { Badge } from "../ui/badge";
+import { Progress } from "@/components/ui/progress";
 
 interface PreferenceToolProps {
   onGenerateRecommendations: (preferences: string) => void;
@@ -41,6 +42,7 @@ export function PreferenceTool({
 
   return (
     <Card>
+      {isSummarizing && <Progress value={100} className="w-full h-1 animate-pulse bg-accent" />}
       <CardHeader>
         <CardTitle className="flex items-center justify-between font-headline">
           <div className="flex items-center gap-2">
@@ -66,7 +68,7 @@ export function PreferenceTool({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {isSummarizing ? (
+        {isSummarizing && !summarizedPreferences ? (
             <div className="space-y-4 rounded-lg border bg-muted/50 p-4 animate-pulse">
                 <div className="h-5 w-3/4 rounded bg-muted-foreground/20"></div>
                  <div className="flex flex-wrap gap-2">
@@ -117,6 +119,7 @@ export function PreferenceTool({
             onChange={(e) => setPreferences(e.target.value)}
             className="min-h-[100px]"
             disabled={isSummarizing}
+            suppressHydrationWarning
           />
           <Button
             type="submit"
