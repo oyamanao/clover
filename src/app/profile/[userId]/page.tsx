@@ -46,7 +46,7 @@ export default function ProfilePage({ params: paramsPromise }: { params: Promise
     return lists.sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
   }, [privateLists, publicLists, isOwnProfile]);
   
-  const isLoading = isUserLoading || isProfileLoading;
+  const isLoading = isProfileLoading || isUserLoading;
   
   const isLoadingLists = isLoadingPublic || (isOwnProfile && isLoadingPrivate);
   
@@ -58,7 +58,7 @@ export default function ProfilePage({ params: paramsPromise }: { params: Promise
     );
   }
 
-  if (!profileUser && !isLoading) {
+  if (!profileUser) {
     return (
         <div className="flex flex-col min-h-screen bg-background text-foreground">
           <Header />
