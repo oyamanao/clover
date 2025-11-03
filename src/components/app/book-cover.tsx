@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -25,7 +26,7 @@ export function BookCover({ src, alt, width, height, className, aspectRatio = 'p
     return (
       <div 
         className={cn(
-            "flex items-center justify-center bg-muted",
+            "flex items-center justify-center bg-transparent",
             aspectRatio === 'portrait' ? 'aspect-[2/3]' : 'aspect-square',
             className
         )}
