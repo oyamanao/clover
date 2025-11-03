@@ -1,300 +1,145 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import type { Book, ChatMessage } from "@/lib/types";
-import { BookLibrary } from "@/components/app/book-library";
-import { PreferenceTool } from "@/components/app/preference-tool";
-import { RecommendationChatbot } from "@/components/app/recommendation-chatbot";
+import { useMemo } from "react";
+import { useFirebase, useCollection, useMemoFirebase } from "@/firebase";
+import { useRouter }from "next/navigation";
 import { Header } from "@/components/app/header";
-import { generateBookRecommendations } from "@/ai/flows/generate-book-recommendations";
-import { refineRecommendationsViaChatbot } from "@/ai/flows/refine-recommendations-via-chatbot";
-import { summarizeLibrary, type SummarizeLibraryOutput } from "@/ai/flows/summarize-library";
-import { useToast } from "@/hooks/use-toast";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import { Book as BookIcon, Bot, Sparkles, Loader2 } from "lucide-react";
-import { useFirebase } from "@/firebase";
-import { useRouter } from "next/navigation";
+import { collection, query, where, limit } from "firebase/firestore";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { Loader2, Book, Heart, Users, Lock, ArrowRight } from "lucide-react";
 
-
-export default function Home() {
-  const [books, setBooks] = useState<Book[]>([]);
-  const [userPreferences, setUserPreferences] = useState("");
-  const [summarizedPreferences, setSummarizedPreferences] = useState<SummarizeLibraryOutput | null>(null);
-  const [initialRecommendations, setInitialRecommendations] = useState("");
-  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [isChatting, setIsChatting] = useState(false);
-  const [isSummarizing, setIsSummarizing] = useState(false);
-  const [activeTab, setActiveTab] = useState("library");
-
-  const { toast } = useToast();
-  const { user, isUserLoading } = useFirebase();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!isUserLoading && !user) {
-      router.push('/welcome');
-    }
-  }, [user, isUserLoading, router]);
-  
-  const handleRefreshPreferences = async () => {
-    if (books.length === 0) {
-       toast({
-        variant: "destructive",
-        title: "Empty Library",
-        description: "Add some books to your library first.",
-      });
-      return;
-    }
-    setIsSummarizing(true);
-    try {
-      const libraryContent = books.map(b => `${b.title} by ${b.author}`).join('\n');
-      const result = await summarizeLibrary({ books: libraryContent });
-      
-      setSummarizedPreferences(result);
-
-      toast({
-        title: "Preferences Updated",
-        description: "We've analyzed your library and updated your preferences.",
-      });
-    } catch (error) {
-       console.error(error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to refresh preferences.",
-      });
-    } finally {
-      setIsSummarizing(false);
-    }
-  };
-  
-  useEffect(() => {
-    if (books.length > 0) {
-      handleRefreshPreferences();
-    } else {
-      setUserPreferences("");
-      setSummarizedPreferences(null);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [books]);
-
-
-  const handleAddBook = (book: Omit<Book, "id">) => {
-    // Check if book is already in the library
-    if (books.find((b) => b.title === book.title && b.author === book.author)) {
-      toast({
-        variant: "destructive",
-        title: "Book Already in Library",
-        description: `"${book.title}" is already in your library.`,
-      });
-      return;
-    }
-    setBooks((prev) => [...prev, { ...book, id: Date.now() }]);
-    toast({
-      title: "Book Added",
-      description: `"${book.title}" has been added to your library.`,
-    });
-  };
-
-  const handleRemoveBook = (bookId: number) => {
-    const bookToRemove = books.find((b) => b.id === bookId);
-    setBooks((prev) => prev.filter((book) => book.id !== bookId));
-    if (bookToRemove) {
-      toast({
-        title: "Book Removed",
-        description: `"${bookToRemove.title}" has been removed from your library.`,
-      });
-    }
-  };
-  
-  const handleClearLibrary = () => {
-    setBooks([]);
-    setSummarizedPreferences(null);
-    setUserPreferences("");
-    setInitialRecommendations("");
-    setChatHistory([]);
-    toast({
-      title: "Library Cleared",
-      description: "All books have been removed from your library.",
-    });
-  };
-
-  const handleGenerateRecommendations = async (preferences: string) => {
-    
-    // Combine summary with user's manual input
-    const finalPreferences = [summarizedPreferences?.summary, preferences].filter(Boolean).join('\n\n');
-
-    setIsGenerating(true);
-    setInitialRecommendations("");
-    setChatHistory([]);
-
-    try {
-      const result = await generateBookRecommendations({ preferences: finalPreferences });
-      setInitialRecommendations(result.recommendations);
-      setChatHistory([
-        {
-          id: Date.now(),
-          role: "assistant",
-          content:
-            "I've generated some initial recommendations for you based on your library and preferences. Feel free to ask me to refine them!",
-          recommendations: result.recommendations,
-        },
-      ]);
-      setActiveTab("chatbot");
-    } catch (error) {
-      console.error(error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to generate recommendations.",
-      });
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const handleSendMessage = async (userInput: string) => {
-    const newHistory: ChatMessage[] = [
-      ...chatHistory,
-      { id: Date.now(), role: "user", content: userInput },
-    ];
-    setChatHistory(newHistory);
-    setIsChatting(true);
-
-    try {
-      const bookDetails = books
-        .map(
-          (b) =>
-            `Title: ${b.title}, Author: ${b.author}, Description: ${b.description}`
-        )
-        .join("\n\n");
-      const formattedChatHistory = newHistory
-        .map((m) => `${m.role}: ${m.content}`)
-        .join("\n");
-      
-      const fullPreferences = [summarizedPreferences?.summary, userPreferences].filter(Boolean).join('\n\n');
-      
-      const lastAssistantMessage = chatHistory.filter(m => m.role === 'assistant').pop();
-      const currentRecommendations = lastAssistantMessage?.recommendations || initialRecommendations;
-
-
-      const result = await refineRecommendationsViaChatbot({
-        bookDetails,
-        userPreferences: fullPreferences,
-        chatHistory: formattedChatHistory,
-        userInput,
-        currentRecommendations,
-      });
-
-      const assistantMessage: ChatMessage = {
-        id: Date.now() + 1,
-        role: "assistant",
-        content: result.chatbotResponse,
-        recommendations: result.refinedRecommendations,
-      };
-      setChatHistory((prev) => [...prev, assistantMessage]);
-    } catch (error) {
-      console.error(error);
-      const errorMessage: ChatMessage = {
-        id: Date.now() + 1,
-        role: "assistant",
-        content: "Sorry, I encountered an error. Please try again.",
-      };
-      setChatHistory((prev) => [...prev, errorMessage]);
-      toast({
-        variant: "destructive",
-        title: "Chatbot Error",
-        description: "Failed to get a response from the chatbot.",
-      });
-    } finally {
-      setIsChatting(false);
-    }
-  };
-
-  const handleNextFromLibrary = () => {
-    if(books.length > 0) {
-      setActiveTab('preferences');
-    } else {
-       toast({
-        variant: "destructive",
-        title: "Empty Library",
-        description: "Add at least one book to continue.",
-      });
-    }
-  }
-
-  if (isUserLoading || !user) {
+function BookListCard({ list }: { list: any }) {
     return (
-      <div className="flex flex-col min-h-screen bg-background text-foreground">
-        <Header />
-        <main className="flex-grow container mx-auto p-4 md:p-8 flex justify-center items-center">
-          <Loader2 className="animate-spin size-12 text-accent" />
-        </main>
-      </div>
+        <Card className="hover:shadow-lg hover:border-accent/50 transition-all flex flex-col">
+            <CardHeader>
+                <CardTitle className="font-headline">{list.name}</CardTitle>
+                <CardDescription className="flex items-center gap-2">
+                    {list.isPublic ? <Users className="size-4" /> : <Lock className="size-4" />}
+                    {list.isPublic ? 'Public List' : 'Private List'}
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="flex-grow">
+                <p className="text-muted-foreground mb-4 line-clamp-2 h-10">{list.description}</p>
+                <div className="flex justify-between items-center text-sm text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                        <Book className="size-4"/>
+                        <span>{list.books.length} {list.books.length === 1 ? 'book' : 'books'}</span>
+                    </div>
+                     <div className="flex items-center gap-1">
+                        <span>{list.likes || 0}</span>
+                        <Heart className="size-4"/>
+                      </div>
+                </div>
+            </CardContent>
+        </Card>
     );
-  }
+}
 
-  return (
-    <div className="flex flex-col min-h-screen bg-background text-foreground">
-      <Header />
-      <main className="flex-grow container mx-auto p-4 md:p-8 flex justify-center">
-        <Tabs
-          value={activeTab}
-          onValueChange={setActiveTab}
-          className="w-full max-w-5xl"
-        >
-          <div className="flex justify-center">
-            <TabsList className="grid w-full grid-cols-3 max-w-lg">
-              <TabsTrigger value="library">
-                <BookIcon className="mr-2" /> Library
-              </TabsTrigger>
-              <TabsTrigger value="preferences" disabled={books.length === 0}>
-                <Sparkles className="mr-2" /> Preferences
-              </TabsTrigger>
-              <TabsTrigger
-                value="chatbot"
-                disabled={!summarizedPreferences}
-              >
-                <Bot className="mr-2" /> Chatbot
-              </TabsTrigger>
-            </TabsList>
-          </div>
-          <TabsContent value="library">
-            <BookLibrary 
-              books={books} 
-              onAddBook={handleAddBook} 
-              onRemoveBook={handleRemoveBook} 
-              onClearLibrary={handleClearLibrary} 
-              onNext={handleNextFromLibrary} 
-            />
-          </TabsContent>
-          <TabsContent value="preferences">
-            <PreferenceTool
-              onGenerateRecommendations={handleGenerateRecommendations}
-              isLoading={isGenerating}
-              preferences={userPreferences}
-              setPreferences={setUserPreferences}
-              onRefreshPreferences={handleRefreshPreferences}
-              isSummarizing={isSummarizing}
-              summarizedPreferences={summarizedPreferences}
-            />
-          </TabsContent>
-          <TabsContent value="chatbot">
-            <RecommendationChatbot
-              chatHistory={chatHistory}
-              onSendMessage={handleSendMessage}
-              isLoading={isChatting}
-              isReady={!!summarizedPreferences}
-            />
-          </TabsContent>
-        </Tabs>
-      </main>
-    </div>
-  );
+
+function SectionLoadingSkeleton() {
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[...Array(4)].map((_, i) => (
+                <Card key={i} className="animate-pulse">
+                    <CardHeader>
+                        <div className="h-6 w-3/4 rounded bg-muted-foreground/20"></div>
+                        <div className="h-4 w-1/2 rounded bg-muted-foreground/20 mt-2"></div>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="h-4 w-full rounded bg-muted-foreground/20"></div>
+                        <div className="h-4 w-5/6 rounded bg-muted-foreground/20 mt-2"></div>
+                    </CardContent>
+                </Card>
+            ))}
+        </div>
+    );
+}
+
+export default function HomePage() {
+    const { firestore, user, isUserLoading } = useFirebase();
+    const router = useRouter();
+
+    if (!isUserLoading && !user) {
+        router.push('/welcome');
+    }
+
+    const publicListsQuery = useMemoFirebase(() => {
+        if (!firestore) return null;
+        return query(collection(firestore, 'public_book_lists'), limit(8));
+    }, [firestore]);
+
+    const myPrivateListsQuery = useMemoFirebase(() => {
+        if (!firestore || !user) return null;
+        return query(collection(firestore, `users/${user.uid}/book_lists`), limit(4));
+    }, [firestore, user]);
+
+    const myPublicListsQuery = useMemoFirebase(() => {
+        if (!firestore || !user) return null;
+        return query(collection(firestore, 'public_book_lists'), where('userId', '==', user.uid), limit(4));
+    }, [firestore, user]);
+
+    const { data: publicLists, isLoading: isLoadingPublic } = useCollection(publicListsQuery);
+    const { data: myPrivateLists, isLoading: isLoadingMyPrivate } = useCollection(myPrivateListsQuery);
+    const { data: myPublicLists, isLoading: isLoadingMyPublic } = useCollection(myPublicListsQuery);
+
+    const myLists = useMemo(() => {
+        return [...(myPrivateLists || []), ...(myPublicLists || [])].sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)).slice(0,4);
+    }, [myPrivateLists, myPublicLists]);
+    
+    const isLoadingMyLists = isLoadingMyPrivate || isLoadingMyPublic;
+
+    if (isUserLoading || !user) {
+        return (
+            <div className="flex h-screen w-full items-center justify-center bg-background">
+                <Loader2 className="animate-spin text-accent size-12" />
+            </div>
+        );
+    }
+    
+    return (
+        <div className="flex flex-col min-h-screen bg-background text-foreground">
+            <Header />
+            <main className="flex-grow container mx-auto p-4 md:p-8 space-y-12">
+                <section>
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-3xl font-headline">Recommended For You</h2>
+                        <Button variant="link">View All <ArrowRight className="ml-2"/></Button>
+                    </div>
+                    {isLoadingPublic ? <SectionLoadingSkeleton /> : (
+                         publicLists && publicLists.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                {publicLists.map(list => <BookListCard key={list.id} list={list} />)}
+                            </div>
+                        ) : <p className="text-muted-foreground">No public book lists available right now.</p>
+                    )}
+                </section>
+                <section>
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-3xl font-headline">My Book Lists</h2>
+                         {myLists && myLists.length > 0 && (
+                             <Link href={`/profile/${user.uid}`} passHref>
+                                <Button variant="link">View All <ArrowRight className="ml-2"/></Button>
+                             </Link>
+                         )}
+                    </div>
+                     {isLoadingMyLists ? <SectionLoadingSkeleton /> : (
+                         myLists && myLists.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                {myLists.map(list => <BookListCard key={list.id} list={list} />)}
+                            </div>
+                        ) : (
+                             <div className="text-center py-16 border-2 border-dashed rounded-lg">
+                                <p className="text-muted-foreground">You haven't created any book lists yet.</p>
+                                <Button variant="link" asChild className="mt-2">
+                                    <Link href="/book-lists/new">Create one now</Link>
+                                </Button>
+                            </div>
+                        )
+                    )}
+                </section>
+            </main>
+        </div>
+    );
 }
