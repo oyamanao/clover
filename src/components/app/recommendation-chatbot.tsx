@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Bot, User, BookHeart } from "lucide-react";
+import { Send, Clover, User, BookHeart } from "lucide-react";
 import type { ChatMessage } from "@/lib/types";
 import {
   Card,
@@ -90,7 +90,7 @@ export function RecommendationChatbot({
     <Card className="h-full flex flex-col min-h-[70vh] mt-4">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 font-headline">
-          <Bot className="size-6" /> Recommendation Chatbot
+          <Clover className="size-6" /> Recommendation Chatbot
         </CardTitle>
         <CardDescription>{cardDescription}</CardDescription>
       </CardHeader>
@@ -108,7 +108,7 @@ export function RecommendationChatbot({
                 {message.role === "assistant" && (
                   <Avatar className="shadow">
                     <AvatarFallback>
-                      <Bot className="size-5" />
+                      <Clover className="size-5" />
                     </AvatarFallback>
                   </Avatar>
                 )}
@@ -144,7 +144,7 @@ export function RecommendationChatbot({
               <div className="flex items-start gap-3 justify-start">
                 <Avatar>
                   <AvatarFallback>
-                    <Bot className="size-5" />
+                    <Clover className="size-5" />
                   </AvatarFallback>
                 </Avatar>
                 <div className="max-w-md rounded-lg p-3.5 bg-muted flex items-center space-x-2">

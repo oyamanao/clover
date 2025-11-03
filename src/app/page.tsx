@@ -16,7 +16,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { Book as BookIcon, Bot, Sparkles } from "lucide-react";
+import { Book as BookIcon, Clover, Sparkles } from "lucide-react";
 
 export default function Home() {
   const [books, setBooks] = useState<Book[]>([]);
@@ -239,7 +239,7 @@ export default function Home() {
                 value="chatbot"
                 disabled={!summarizedPreferences}
               >
-                <Bot className="mr-2" /> Chatbot
+                <Clover className="mr-2" /> Chatbot
               </TabsTrigger>
             </TabsList>
           </div>
