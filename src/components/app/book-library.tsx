@@ -107,6 +107,7 @@ export function BookLibrary({ books, onAddBook }: BookLibraryProps) {
                           description: book.description,
                         })
                       }
+                      suppressHydrationWarning
                     >
                       <Plus className="mr-2" /> Add
                     </Button>
