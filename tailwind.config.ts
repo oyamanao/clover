@@ -95,6 +95,7 @@ export default {
       },
       boxShadow: {
         'inner-neon': 'inset 0 2px 4px 0 rgba(0,0,0,0.05)',
+        'neon': '0 0 20px hsl(var(--accent) / 0.5)',
       }
     },
   },
