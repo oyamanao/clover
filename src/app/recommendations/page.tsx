@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -99,6 +100,28 @@ export default function RecommendationsPage() {
       title: "Book Added",
       description: `"${book.title}" has been added to your library.`,
     });
+  };
+
+  const handleAddMultipleBooks = (newBooks: Omit<Book, 'id'>[]) => {
+    const uniqueNewBooks = newBooks.filter(newBook => 
+      !books.some(existingBook => 
+        existingBook.title === newBook.title && existingBook.author === newBook.author
+      )
+    );
+
+    if (uniqueNewBooks.length > 0) {
+      const booksWithIds = uniqueNewBooks.map(b => ({ ...b, id: Date.now() + Math.random() }));
+      setBooks(prev => [...prev, ...booksWithIds]);
+      toast({
+        title: "Books Added",
+        description: `${uniqueNewBooks.length} new book(s) have been added to your library.`,
+      });
+    } else {
+       toast({
+        title: "No New Books Added",
+        description: "All books from the selected list are already in your library.",
+      });
+    }
   };
 
   const handleRemoveBook = (bookId: number) => {
@@ -268,6 +291,7 @@ export default function RecommendationsPage() {
             <BookLibrary 
               books={books} 
               onAddBook={handleAddBook} 
+              onAddMultipleBooks={handleAddMultipleBooks}
               onRemoveBook={handleRemoveBook} 
               onClearLibrary={handleClearLibrary} 
               onNext={handleNextFromLibrary} 
@@ -297,3 +321,5 @@ export default function RecommendationsPage() {
     </div>
   );
 }
+
+    

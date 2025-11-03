@@ -1,9 +1,9 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Image from "next/image";
-import { Plus, Book as BookIcon, Search, Loader2, Trash2, XCircle, ArrowRight, BookImage, ChevronDown } from "lucide-react";
+import { Plus, Book as BookIcon, Search, Loader2, Trash2, XCircle, ArrowRight, BookImage, ChevronDown, Library, PlusCircle } from "lucide-react";
 import type { Book as BookType, BookSearchResult } from "@/lib/types";
 import {
   Card,
@@ -32,17 +32,122 @@ import {
 import { BookCover } from "./book-cover";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useRouter } from "next/navigation";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { useFirebase, useCollection, useMemoFirebase } from "@/firebase";
+import { collection, query, where } from "firebase/firestore";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 
 interface BookLibraryProps {
   books: BookType[];
   onAddBook: (book: Omit<BookType, "id">) => void;
+  onAddMultipleBooks: (books: Omit<BookType, 'id'>[]) => void;
   onRemoveBook: (bookId: number) => void;
   onClearLibrary: () => void;
   onNext: () => void;
 }
 
-export function BookLibrary({ books, onAddBook, onRemoveBook, onClearLibrary, onNext }: BookLibraryProps) {
+function AddFromListDialog({ onAddBooks }: { onAddBooks: (books: Omit<BookType, 'id'>[]) => void }) {
+    const { firestore, user } = useFirebase();
+    const [selectedListId, setSelectedListId] = useState<string | null>(null);
+
+    const privateListsQuery = useMemoFirebase(() => {
+        if (!firestore || !user) return null;
+        return query(collection(firestore, `users/${user.uid}/book_lists`));
+    }, [firestore, user]);
+
+    const publicListsQuery = useMemoFirebase(() => {
+        if (!firestore || !user) return null;
+        return query(collection(firestore, 'public_book_lists'), where('userId', '==', user.uid));
+    }, [firestore, user]);
+    
+    const { data: privateLists, isLoading: isLoadingPrivate } = useCollection(privateListsQuery);
+    const { data: publicLists, isLoading: isLoadingPublic } = useCollection(publicListsQuery);
+
+    const bookLists = useMemo(() => {
+        const lists = publicLists ? [...publicLists] : [];
+        if (privateLists) {
+            lists.push(...privateLists);
+        }
+        return lists.sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+    }, [privateLists, publicLists]);
+
+    const isLoading = isLoadingPrivate || isLoadingPublic;
+
+    const selectedList = bookLists.find(list => list.id === selectedListId);
+
+    const handleAddBooks = () => {
+        if (selectedList && selectedList.books) {
+            onAddBooks(selectedList.books);
+        }
+    };
+
+    return (
+        <Dialog>
+            <DialogTrigger asChild>
+                <Button variant="outline"><Library className="mr-2" /> Add from My Lists</Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                    <DialogTitle>Add Books from a List</DialogTitle>
+                    <DialogDescription>
+                        Select one of your existing lists to add its books to your library.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="py-4">
+                    {isLoading ? (
+                        <div className="flex justify-center items-center h-40">
+                            <Loader2 className="animate-spin text-muted-foreground" />
+                        </div>
+                    ) : bookLists.length > 0 ? (
+                        <ScrollArea className="h-60 pr-4">
+                            <RadioGroup onValueChange={setSelectedListId} value={selectedListId || undefined}>
+                                <div className="space-y-2">
+                                {bookLists.map(list => (
+                                    <Label 
+                                        key={list.id} 
+                                        htmlFor={list.id}
+                                        className={cn(
+                                            "flex items-center gap-4 p-3 rounded-md border transition-colors cursor-pointer",
+                                            selectedListId === list.id ? "bg-accent/20 border-accent" : "hover:bg-muted/50"
+                                        )}
+                                    >
+                                        <RadioGroupItem value={list.id} id={list.id} />
+                                        <div className="flex-grow">
+                                            <p className="font-semibold">{list.name}</p>
+                                            <p className="text-sm text-muted-foreground">{list.books?.length || 0} books - {list.isPublic ? 'Public' : 'Private'}</p>
+                                        </div>
+                                    </Label>
+                                ))}
+                                </div>
+                            </RadioGroup>
+                        </ScrollArea>
+                    ) : (
+                        <div className="text-center text-muted-foreground h-40 flex items-center justify-center">
+                            <p>You don&apos;t have any book lists yet.</p>
+                        </div>
+                    )}
+                </div>
+                <DialogFooter>
+                    <DialogClose asChild>
+                        <Button type="button" variant="secondary">
+                            Cancel
+                        </Button>
+                    </DialogClose>
+                     <DialogClose asChild>
+                        <Button onClick={handleAddBooks} disabled={!selectedListId}>
+                            <PlusCircle className="mr-2" /> Add Books
+                        </Button>
+                    </DialogClose>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+export function BookLibrary({ books, onAddBook, onAddMultipleBooks, onRemoveBook, onClearLibrary, onNext }: BookLibraryProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<BookSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -91,21 +196,25 @@ export function BookLibrary({ books, onAddBook, onRemoveBook, onClearLibrary, on
       <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="space-y-6">
           <h3 className="text-lg font-medium font-headline">Find Books</h3>
-          <form onSubmit={handleSearch} className="flex items-center gap-2">
-            <Input
-              placeholder="Search for a book..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              suppressHydrationWarning
-            />
-            <Button type="submit" disabled={isSearching} size="icon">
-              {isSearching ? (
-                <Loader2 className="animate-spin" />
-              ) : (
-                <Search />
-              )}
-            </Button>
-          </form>
+          <div className="space-y-4">
+            <form onSubmit={handleSearch} className="flex items-center gap-2">
+                <Input
+                placeholder="Search for a book..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                suppressHydrationWarning
+                />
+                <Button type="submit" disabled={isSearching} size="icon">
+                {isSearching ? (
+                    <Loader2 className="animate-spin" />
+                ) : (
+                    <Search />
+                )}
+                </Button>
+            </form>
+             <AddFromListDialog onAddBooks={onAddMultipleBooks} />
+          </div>
+
 
           {(isSearching || searchResults.length > 0) && (
             <div className="space-y-4">
@@ -246,3 +355,5 @@ export function BookLibrary({ books, onAddBook, onRemoveBook, onClearLibrary, on
     </Card>
   );
 }
+
+    
