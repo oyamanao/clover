@@ -12,17 +12,17 @@ import { Loader2, Heart, Share2, Edit, User as UserIcon, Book, BookImage } from 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
 import Link from 'next/link';
+import { BookCover } from '@/components/app/book-cover';
 
 function BookInList({ book }: { book: any }) {
     return (
         <div className="flex items-start gap-4 p-4 border-b">
-            <Image 
+            <BookCover 
                 src={book.imageUrl} 
                 alt={`Cover of ${book.title}`} 
                 width={80} 
                 height={120} 
                 className="rounded-md object-cover shadow-md"
-                unoptimized
             />
             <div className="flex-grow">
                 <h3 className="text-lg font-semibold font-headline">{book.title}</h3>

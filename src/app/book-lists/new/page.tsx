@@ -15,36 +15,8 @@ import { searchBooks } from '@/ai/flows/search-books';
 import type { BookSearchResult, Book } from '@/lib/types';
 import { Loader2, Plus, Search, Trash2, XCircle, Book as BookIcon, BookImage } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import Image from 'next/image';
 import { Header } from '@/components/app/header';
-
-function BookCover({ src, alt, width, height, className }: { src: string; alt: string; width: number; height: number; className?: string }) {
-  const [error, setError] = useState(false);
-
-  if (error || !src) {
-    return (
-      <div 
-        className="flex items-center justify-center bg-muted rounded"
-        style={{ width, height }}
-      >
-        <BookImage className="size-1/2 text-muted-foreground" />
-      </div>
-    );
-  }
-
-  return (
-    <Image 
-      src={src} 
-      alt={alt}
-      width={width}
-      height={height}
-      className={className}
-      unoptimized
-      onError={() => setError(true)}
-    />
-  );
-}
-
+import { BookCover } from '@/components/app/book-cover';
 
 export default function NewBookListPage() {
   const { firestore, user } = useFirebase();
