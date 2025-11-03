@@ -4,47 +4,20 @@ import { useMemo, useEffect } from "react";
 import { useFirebase, useCollection, useMemoFirebase } from "@/firebase";
 import { useRouter }from "next/navigation";
 import { Header } from "@/components/app/header";
-import { collection, query, where, limit } from "firebase/firestore";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { collection, query, where, limit, orderBy } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Loader2, Book, Heart, Users, Lock, ArrowRight } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Loader2, ArrowRight } from "lucide-react";
+import { BookListCard } from "@/components/app/book-list-card";
+import { BookCard } from "@/components/app/book-card";
+import type { BookWithListContext } from "@/lib/types";
+import { useLocalStorage } from "@/hooks/use-local-storage";
+import { Card, CardContent, CardHeader } from "../components/ui/card";
 
-function BookListCard({ list }: { list: any }) {
-    return (
-         <Link href={`/book-lists/${list.id}`} className="block h-full">
-            <Card className="hover:shadow-lg hover:border-accent/50 transition-all flex flex-col h-full">
-                <CardHeader>
-                    <CardTitle className="font-headline">{list.name}</CardTitle>
-                    <CardDescription className="flex items-center gap-2">
-                        {list.isPublic ? <Users className="size-4" /> : <Lock className="size-4" />}
-                        {list.isPublic ? 'Public List' : 'Private List'}
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="flex-grow">
-                    <p className="text-muted-foreground mb-4 line-clamp-2 h-10">{list.description}</p>
-                    <div className="flex justify-between items-center text-sm text-muted-foreground">
-                        <div className="flex items-center gap-2">
-                            <Book className="size-4"/>
-                            <span>{list.books?.length || 0} {list.books?.length === 1 ? 'book' : 'books'}</span>
-                        </div>
-                         <div className="flex items-center gap-1">
-                            <span>{list.likedBy?.length || 0}</span>
-                            <Heart className="size-4"/>
-                          </div>
-                    </div>
-                </CardContent>
-            </Card>
-        </Link>
-    );
-}
-
-
-function SectionLoadingSkeleton() {
+function SectionLoadingSkeleton({ count = 4 }: { count?: number }) {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[...Array(4)].map((_, i) => (
+            {[...Array(count)].map((_, i) => (
                 <Card key={i} className="animate-pulse">
                     <CardHeader>
                         <div className="h-6 w-3/4 rounded bg-muted-foreground/20"></div>
@@ -60,9 +33,28 @@ function SectionLoadingSkeleton() {
     );
 }
 
+function BookSectionLoadingSkeleton({ count = 4 }: { count?: number }) {
+    return (
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+            {[...Array(count)].map((_, i) => (
+                 <Card key={i} className="animate-pulse">
+                    <CardContent className="p-0">
+                        <div className="bg-muted-foreground/20 aspect-[2/3] w-full"></div>
+                        <div className="p-4 space-y-2">
+                            <div className="h-5 w-3/4 rounded bg-muted-foreground/20"></div>
+                            <div className="h-4 w-1/2 rounded bg-muted-foreground/20"></div>
+                        </div>
+                    </CardContent>
+                </Card>
+            ))}
+        </div>
+    );
+}
+
 export default function HomePage() {
     const { firestore, user, isUserLoading } = useFirebase();
     const router = useRouter();
+    const [recentlyViewedIds] = useLocalStorage<string[]>('recentlyViewedBookLists', []);
 
     useEffect(() => {
         if (!isUserLoading && !user) {
@@ -72,7 +64,7 @@ export default function HomePage() {
 
     const publicListsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
-        return query(collection(firestore, 'public_book_lists'), limit(8));
+        return query(collection(firestore, 'public_book_lists'), orderBy('createdAt', 'desc'), limit(12));
     }, [firestore]);
 
     const myPrivateListsQuery = useMemoFirebase(() => {
@@ -95,6 +87,33 @@ export default function HomePage() {
     
     const isLoadingMyLists = isLoadingMyPrivate || isLoadingMyPublic;
 
+    const recommendedBooks = useMemo((): BookWithListContext[] => {
+        if (!publicLists) return [];
+        
+        const books: BookWithListContext[] = [];
+        const uniqueBooks = new Set<string>(); // "title|author"
+        
+        for (const list of publicLists) {
+            if (list.books) {
+                for (const book of list.books) {
+                     const uniqueKey = `${book.title}|${book.author}`;
+                     if (!uniqueBooks.has(uniqueKey)) {
+                         uniqueBooks.add(uniqueKey);
+                         books.push({ ...book, listId: list.id, listName: list.name });
+                     }
+                }
+            }
+        }
+        return books.slice(0, 12);
+    }, [publicLists]);
+
+    const recentlyViewedLists = useMemo(() => {
+        if (!publicLists || recentlyViewedIds.length === 0) return [];
+        
+        const listMap = new Map(publicLists.map(list => [list.id, list]));
+        return recentlyViewedIds.map(id => listMap.get(id)).filter(Boolean).slice(0, 4);
+    }, [publicLists, recentlyViewedIds]);
+
     if (isUserLoading || !user) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -106,20 +125,32 @@ export default function HomePage() {
     return (
         <div className="flex flex-col min-h-screen bg-background text-foreground">
             <Header />
-            <main className="flex-grow container mx-auto p-4 md:p-8 space-y-12">
+            <main className="flex-grow container mx-auto p-4 md:p-8 space-y-16">
                 <section>
                     <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-3xl font-headline">Recommended For You</h2>
-                        <Button variant="link">View All <ArrowRight className="ml-2"/></Button>
+                        <h2 className="text-3xl font-headline">Recommended Books</h2>
+                        {/* <Button variant="link">View All <ArrowRight className="ml-2"/></Button> */}
                     </div>
-                    {isLoadingPublic ? <SectionLoadingSkeleton /> : (
-                         publicLists && publicLists.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                {publicLists.map(list => <BookListCard key={list.id} list={list} />)}
+                    {isLoadingPublic ? <BookSectionLoadingSkeleton count={12}/> : (
+                         recommendedBooks && recommendedBooks.length > 0 ? (
+                            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+                                {recommendedBooks.map(book => <BookCard key={book.title + book.author} book={book} />)}
                             </div>
-                        ) : <p className="text-muted-foreground">No public book lists available right now.</p>
+                        ) : <p className="text-muted-foreground">No recommended books available right now.</p>
                     )}
                 </section>
+
+                {recentlyViewedLists.length > 0 && (
+                     <section>
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-3xl font-headline">Recently Viewed</h2>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {recentlyViewedLists.map(list => list && <BookListCard key={list.id} list={list} />)}
+                        </div>
+                    </section>
+                )}
+
                 <section>
                     <div className="flex justify-between items-center mb-6">
                         <h2 className="text-3xl font-headline">My Book Lists</h2>

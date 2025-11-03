@@ -6,6 +6,11 @@ export interface Book {
   imageUrl: string;
 }
 
+export interface BookWithListContext extends Omit<Book, 'id'> {
+    listId: string;
+    listName: string;
+}
+
 export interface ChatMessage {
   id: number;
   role: "user" | "assistant";

@@ -17,6 +17,7 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
 
 function BookInList({ book }: { book: any }) {
@@ -43,6 +44,8 @@ export default function BookListPage({ params: paramsPromise }: { params: Promis
     const { firestore, user } = useFirebase();
     const { toast } = useToast();
     const router = useRouter();
+    const [recentlyViewed, setRecentlyViewed] = useLocalStorage<string[]>('recentlyViewedBookLists', []);
+
 
     // To find the booklist, we have to check both public and private collections.
     const listRef = useMemoFirebase(() => {
@@ -77,6 +80,13 @@ export default function BookListPage({ params: paramsPromise }: { params: Promis
                 dataToShow = privateListData;
             }
 
+            if (dataToShow?.isPublic) {
+                 setRecentlyViewed(prev => {
+                    const newRecentlyViewed = [listId, ...prev.filter(id => id !== listId)];
+                    return newRecentlyViewed.slice(0, 10); // Keep last 10
+                });
+            }
+
             // If there's an error on the public fetch but we found a private list, ignore the public error.
             if (publicError && !privateListData) {
                  const permissionError = new FirestorePermissionError({
@@ -96,7 +106,7 @@ export default function BookListPage({ params: paramsPromise }: { params: Promis
         };
 
         loadData();
-    }, [listData, privateListData, isLoadingPublic, isLoadingPrivate, publicError, listId]);
+    }, [listData, privateListData, isLoadingPublic, isLoadingPrivate, publicError, listId, setRecentlyViewed]);
     
     const isOwner = user && finalListData && user.uid === finalListData.userId;
     const hasLiked = user && finalListData?.likedBy?.includes(user.uid);
@@ -139,7 +149,7 @@ export default function BookListPage({ params: paramsPromise }: { params: Promis
             const permissionError = new FirestorePermissionError({
                 path: docRef.path,
                 operation: 'update',
-                requestResourceData: { likedBy: optimisticLikedBy },
+                requestResourceData: { likedBy: 'LIKE_TOGGLE_OPERATION' },
             });
             errorEmitter.emit('permission-error', permissionError);
          });
