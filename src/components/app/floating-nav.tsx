@@ -40,14 +40,14 @@ export function FloatingNav() {
   }
 
   return (
-    <div className="fixed top-4 right-4 z-50">
+    <div className="fixed top-4 left-4 z-50">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="icon" className="rounded-full h-12 w-12 bg-background/80 backdrop-blur-sm shadow-lg hover:bg-accent/90">
             <Clover className="size-6 text-accent" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-56" align="end" forceMount>
+        <DropdownMenuContent className="w-56" align="start" forceMount>
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col space-y-1">
               <p className="text-sm font-medium leading-none">
