@@ -4,6 +4,7 @@ import { Clover, PlusCircle } from "lucide-react";
 import { UserNav } from "@/components/app/user-nav";
 import { Button } from "../ui/button";
 import { useFirebase } from "@/firebase";
+import Link from "next/link";
 
 export function Header() {
   const { user } = useFirebase();
@@ -21,10 +22,12 @@ export function Header() {
         </div>
         <div className="flex items-center gap-4">
           {user && (
-            <Button variant="outline">
-              <PlusCircle className="mr-2" />
-              Create new list
-            </Button>
+            <Link href="/book-lists/new" passHref>
+              <Button variant="outline">
+                <PlusCircle className="mr-2" />
+                Create new list
+              </Button>
+            </Link>
           )}
           <UserNav />
         </div>
