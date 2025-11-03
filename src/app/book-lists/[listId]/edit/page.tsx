@@ -140,7 +140,7 @@ export default function EditBookListPage({ params: paramsPromise }: { params: Pr
         toast({ title: 'Book list updated!', description: `"${listName}" has been saved.` });
         router.push(`/book-lists/${listId}`);
       })
-      .catch(async (serverError) => {
+      .catch((serverError) => {
         const permissionError = new FirestorePermissionError({
           path: listRef.path,
           operation: 'update',
@@ -148,6 +148,8 @@ export default function EditBookListPage({ params: paramsPromise }: { params: Pr
         });
         errorEmitter.emit('permission-error', permissionError);
         setIsSaving(false);
+        // Explicitly return a rejected promise to prevent the assertion error
+        return Promise.reject(serverError);
       });
   };
   
