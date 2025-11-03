@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Book as BookIcon, Search, Loader2 } from "lucide-react";
+import { Plus, Book as BookIcon, Search, Loader2, Trash2 } from "lucide-react";
 import type { Book as BookType, BookSearchResult } from "@/lib/types";
 import {
   Card,
@@ -19,9 +19,10 @@ import { useToast } from "@/hooks/use-toast";
 interface BookLibraryProps {
   books: BookType[];
   onAddBook: (book: Omit<BookType, "id">) => void;
+  onRemoveBook: (bookId: number) => void;
 }
 
-export function BookLibrary({ books, onAddBook }: BookLibraryProps) {
+export function BookLibrary({ books, onAddBook, onRemoveBook }: BookLibraryProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<BookSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -127,10 +128,21 @@ export function BookLibrary({ books, onAddBook }: BookLibraryProps) {
                 {books.map((book) => (
                   <div
                     key={book.id}
-                    className="p-3 border rounded-md bg-accent/20 text-sm"
+                    className="p-3 border rounded-md bg-accent/20 text-sm flex justify-between items-center"
                   >
-                    <p className="font-semibold">{book.title}</p>
-                    <p className="text-muted-foreground">by {book.author}</p>
+                    <div>
+                      <p className="font-semibold">{book.title}</p>
+                      <p className="text-muted-foreground">by {book.author}</p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onRemoveBook(book.id)}
+                      suppressHydrationWarning
+                      aria-label={`Remove ${book.title}`}
+                    >
+                      <Trash2 className="size-4 text-muted-foreground hover:text-destructive" />
+                    </Button>
                   </div>
                 ))}
               </div>
