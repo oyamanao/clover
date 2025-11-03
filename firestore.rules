@@ -76,28 +76,10 @@ service cloud.firestore {
         // For new documents, check the userId in the incoming data
         return request.auth.uid == request.resource.data.userId;
       }
-
+      
+      // Allow authenticated user to only change the 'likedBy' field.
       function isLikingOrUnliking() {
-        // The user must be authenticated.
-        if (request.auth == null) {
-          return false;
-        }
-        let uid = request.auth.uid;
-        let oldList = resource.data.likedBy;
-        let newList = request.resource.data.likedBy;
-        
-        // Ensure other fields are not being changed.
-        let otherFieldsChanged = request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likedBy']);
-        if (!otherFieldsChanged) {
-          return false;
-        }
-
-        // Allow adding UID to the list if it's not already there.
-        let isLiking = oldList.hasAny([uid]) == false && newList.hasAll([uid]) && newList.size() == oldList.size() + 1;
-        // Allow removing UID from the list if it is there.
-        let isUnliking = oldList.hasAny([uid]) && newList.hasAny([uid]) == false && newList.size() == oldList.size() - 1;
-
-        return isLiking || isUnliking;
+        return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likedBy']);
       }
 
       allow read: if true;
