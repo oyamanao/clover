@@ -56,7 +56,7 @@ export default function ProfilePage({ params: paramsPromise }: { params: Promise
     );
   }
 
-  if (!profileUser) {
+  if (!profileUser && !isLoading) {
     return (
         <div className="flex flex-col min-h-screen bg-background text-foreground">
           <Header />
@@ -74,18 +74,20 @@ export default function ProfilePage({ params: paramsPromise }: { params: Promise
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       <Header />
       <main className="flex-grow container mx-auto p-4 md:p-8">
-        <div className="flex items-center gap-6 mb-8">
-          <Avatar className="h-24 w-24 border-4 border-accent">
-            <AvatarImage src={profileUser.photoURL || undefined} alt={profileUser.displayName || 'User'} />
-            <AvatarFallback className="text-3xl">
-              {profileUser.displayName ? profileUser.displayName.charAt(0) : <UserIcon />}
-            </AvatarFallback>
-          </Avatar>
-          <div>
-            <h1 className="text-4xl font-headline font-bold">{profileUser.displayName}</h1>
-            <p className="text-lg text-muted-foreground">{profileUser.email}</p>
-          </div>
-        </div>
+        {profileUser && (
+            <div className="flex items-center gap-6 mb-8">
+            <Avatar className="h-24 w-24 border-4 border-accent">
+                <AvatarImage src={profileUser.photoURL || undefined} alt={profileUser.displayName || 'User'} />
+                <AvatarFallback className="text-3xl">
+                {profileUser.displayName ? profileUser.displayName.charAt(0) : <UserIcon />}
+                </AvatarFallback>
+            </Avatar>
+            <div>
+                <h1 className="text-4xl font-headline font-bold">{profileUser.displayName}</h1>
+                <p className="text-lg text-muted-foreground">{profileUser.email}</p>
+            </div>
+            </div>
+        )}
 
         <div className="flex justify-between items-center mb-6">
             <h2 className="text-3xl font-headline">Book Lists</h2>
@@ -142,14 +144,13 @@ export default function ProfilePage({ params: paramsPromise }: { params: Promise
         ) : (
             <div className="text-center py-16 border-2 border-dashed rounded-lg">
                 <p className="text-muted-foreground">
-                    {isOwnProfile ? "You haven't" : `${profileUser.displayName} hasn't`} created any book lists yet.
+                    {isOwnProfile ? "You haven't" : `${profileUser?.displayName || 'This user'} hasn't`} created any book lists yet.
                 </p>
-                {isOwnProfile && (
+                {isOwnProfile ? (
                     <Button variant="link" asChild className="mt-2">
                         <Link href="/book-lists/new">Create one now</Link>
                     </Button>
-                )}
-                 {!currentUser && !isOwnProfile && (
+                ) : !currentUser && (
                    <div className="mt-4">
                      <p className="text-muted-foreground">Sign in to create your own book lists!</p>
                    </div>
