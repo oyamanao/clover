@@ -67,7 +67,7 @@ export function BookLibrary({ books, onAddBook }: BookLibraryProps) {
             onChange={(e) => setSearchQuery(e.target.value)}
             suppressHydrationWarning
           />
-          <Button type="submit" disabled={isSearching} size="icon">
+          <Button type="submit" disabled={isSearching} size="icon" suppressHydrationWarning>
             {isSearching ? (
               <Loader2 className="animate-spin" />
             ) : (
