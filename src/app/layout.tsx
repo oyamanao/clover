@@ -3,8 +3,8 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: "BookWise AI",
-  description: "AI-powered book recommendations tailored to you.",
+  title: "Clover AI",
+  description: "Welcome to the Book Verse. Your AI-powered guide to the world of books.",
 };
 
 export default function RootLayout({

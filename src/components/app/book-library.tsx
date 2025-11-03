@@ -100,7 +100,7 @@ export function BookLibrary({ books, onAddBook, onRemoveBook, onClearLibrary, on
           <BookIcon className="size-6" /> Your Book Library
         </CardTitle>
         <CardDescription>
-          Search for books to add to your reading history. The more books you
+          Welcome to the Book Verse. Search for books to add to your reading history. The more books you
           add, the smarter the AI becomes.
         </CardDescription>
       </CardHeader>
@@ -114,7 +114,7 @@ export function BookLibrary({ books, onAddBook, onRemoveBook, onClearLibrary, on
               onChange={(e) => setSearchQuery(e.target.value)}
               suppressHydrationWarning
             />
-            <Button type="submit" disabled={isSearching} size="icon" suppressHydrationWarning>
+            <Button type="submit" disabled={isSearching} size="icon">
               {isSearching ? (
                 <Loader2 className="animate-spin" />
               ) : (
@@ -157,7 +157,6 @@ export function BookLibrary({ books, onAddBook, onRemoveBook, onClearLibrary, on
                             })
                           }
                           className="mt-2"
-                          suppressHydrationWarning
                         >
                           <Plus className="mr-2" /> Add
                         </Button>
@@ -176,7 +175,7 @@ export function BookLibrary({ books, onAddBook, onRemoveBook, onClearLibrary, on
                {books.length > 0 && (
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="outline" size="sm" suppressHydrationWarning>
+                      <Button variant="outline" size="sm">
                         <XCircle className="mr-2" /> Clear Library
                       </Button>
                     </AlertDialogTrigger>
@@ -222,7 +221,6 @@ export function BookLibrary({ books, onAddBook, onRemoveBook, onClearLibrary, on
                       variant="ghost"
                       size="icon"
                       onClick={() => onRemoveBook(book.id)}
-                      suppressHydrationWarning
                       aria-label={`Remove ${book.title}`}
                     >
                       <Trash2 className="size-4 text-muted-foreground hover:text-destructive" />
