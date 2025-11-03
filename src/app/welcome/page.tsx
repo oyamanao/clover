@@ -59,15 +59,15 @@ export default function WelcomePage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className="flex flex-col min-h-screen bg-background p-4">
         <main className="flex-grow flex items-center justify-center">
             <div className="text-center space-y-8">
-                <Clover className="size-24 text-accent mx-auto" />
+                <Clover className="size-20 md:size-24 text-accent mx-auto" />
                 <div>
-                    <h1 className="text-6xl font-headline font-bold text-accent">
+                    <h1 className="text-5xl md:text-6xl font-headline font-bold text-accent">
                         Clover AI
                     </h1>
-                    <p className="text-lg text-muted-foreground mt-2">
+                    <p className="text-base md:text-lg text-muted-foreground mt-2">
                         Your AI-powered guide to the world of books.
                     </p>
                 </div>

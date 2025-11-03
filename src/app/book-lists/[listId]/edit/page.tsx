@@ -163,7 +163,7 @@ export default function EditBookListPage({ params: paramsPromise }: { params: Pr
     return (
         <div className="flex flex-col min-h-screen bg-background text-foreground">
             
-            <main className="flex-grow flex items-center justify-center">
+            <main className="flex-grow flex items-center justify-center p-4">
                 <div className="text-center">
                     <h1 className="text-2xl font-headline">Book List Not Found</h1>
                     <p className="text-muted-foreground">This book list could not be found or you do not have permission to edit it.</p>
@@ -177,7 +177,7 @@ export default function EditBookListPage({ params: paramsPromise }: { params: Pr
      return (
         <div className="flex flex-col min-h-screen bg-background text-foreground">
             
-            <main className="flex-grow flex items-center justify-center">
+            <main className="flex-grow flex items-center justify-center p-4">
                 <div className="text-center">
                     <h1 className="text-2xl font-headline">Unauthorized</h1>
                     <p className="text-muted-foreground">You do not have permission to edit this list.</p>
@@ -193,7 +193,7 @@ export default function EditBookListPage({ params: paramsPromise }: { params: Pr
         <main className="flex-grow container mx-auto p-4 md:p-8">
             <Card className="max-w-4xl mx-auto">
                 <CardHeader>
-                    <CardTitle className="font-headline text-3xl">Edit Book List</CardTitle>
+                    <CardTitle className="font-headline text-2xl md:text-3xl">Edit Book List</CardTitle>
                     <CardDescription>Update your list's details and the books within it.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-8">
@@ -303,7 +303,7 @@ export default function EditBookListPage({ params: paramsPromise }: { params: Pr
                         </div>
                     </div>
                 </CardContent>
-                <CardFooter className="justify-between">
+                <CardFooter className="flex-col sm:flex-row justify-between gap-4">
                     <AlertDialog>
                         <AlertDialogTrigger asChild>
                             <Button variant="destructive">

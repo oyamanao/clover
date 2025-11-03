@@ -152,7 +152,7 @@ export default function NewBookListPage() {
         <main className="flex-grow container mx-auto p-4 md:p-8">
             <Card className="max-w-4xl mx-auto">
                 <CardHeader>
-                    <CardTitle className="font-headline text-3xl">Create a New Book List</CardTitle>
+                    <CardTitle className="font-headline text-2xl md:text-3xl">Create a New Book List</CardTitle>
                     <CardDescription>Give your list a name and add some books.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-8">

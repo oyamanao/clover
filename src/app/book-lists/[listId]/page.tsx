@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo, useState, useEffect, use } from 'react';
@@ -211,7 +212,7 @@ export default function BookListPage({ params: paramsPromise }: { params: Promis
         return (
             <div className="flex flex-col min-h-screen bg-background text-foreground">
                 
-                <main className="flex-grow flex items-center justify-center">
+                <main className="flex-grow flex items-center justify-center p-4">
                     <div className="text-center">
                         <h1 className="text-2xl font-headline">Book List Not Found</h1>
                         <p className="text-muted-foreground">This book list could not be found or is private.</p>
@@ -230,7 +231,7 @@ export default function BookListPage({ params: paramsPromise }: { params: Promis
             <main className="flex-grow container mx-auto p-4 md:p-8">
                 <Card className="max-w-4xl mx-auto">
                     <CardHeader>
-                        <CardTitle className="text-4xl font-headline">{finalListData.name}</CardTitle>
+                        <CardTitle className="text-3xl md:text-4xl font-headline">{finalListData.name}</CardTitle>
                         <CardDescription className="pt-2">{finalListData.description}</CardDescription>
 
                         <div className="flex justify-between items-end pt-4">
@@ -260,7 +261,7 @@ export default function BookListPage({ params: paramsPromise }: { params: Promis
                             </div>
                         </div>
                         <Separator className="mt-4"/>
-                         <div className="flex items-center gap-2 pt-4">
+                         <div className="flex items-center gap-2 pt-4 flex-wrap">
                             {isOwner ? (
                                 <Link href={`/book-lists/${listId}/edit`} passHref>
                                     <Button>
