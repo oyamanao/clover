@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useFirebase, useMemoFirebase } from '@/firebase';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -34,6 +35,10 @@ export default function ProfilePage({ params }: { params: { userId: string } }) 
 
   const bookLists = [...(privateLists || []), ...(publicLists || [])];
   const isLoadingLists = isLoadingPrivate || isLoadingPublic;
+  
+  const isOwnProfile = useMemo(() => {
+    return currentUser?.uid === params.userId;
+  }, [currentUser, params]);
 
   if (isUserLoading || isProfileLoading) {
     return (
@@ -56,8 +61,6 @@ export default function ProfilePage({ params }: { params: { userId: string } }) 
         </div>
     )
   }
-
-  const isOwnProfile = currentUser?.uid === params.userId;
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
