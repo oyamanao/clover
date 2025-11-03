@@ -1,37 +1,40 @@
 'use client';
 
-import { useFirebase } from '@/firebase';
+import { useFirebase, useMemoFirebase } from '@/firebase';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Header } from '@/components/app/header';
-import { Loader2, User as UserIcon, Book, PlusCircle } from 'lucide-react';
+import { Loader2, User as UserIcon, Book, PlusCircle, Heart } from 'lucide-react';
 import { doc, collection, query, where } from 'firebase/firestore';
 import { useDoc, useCollection } from '@/firebase';
-import { useMemo } from 'react';
 import Link from 'next/link';
-
-// FAKE DATA FOR NOW
-const fakeBookLists = [
-  { id: '1', name: 'Sci-Fi Adventures', description: 'My favorite space operas and futuristic tales.', isPublic: true, bookCount: 12, likes: 128 },
-  { id: '2', name: 'Modern Fantasy', description: 'Magic, dragons, and epic quests.', isPublic: true, bookCount: 8, likes: 74 },
-  { id: '3', name: 'Private Reading List', description: 'Just for me.', isPublic: false, bookCount: 23, likes: 0 },
-];
-
 
 export default function ProfilePage({ params }: { params: { userId: string } }) {
   const { firestore, user: currentUser, isUserLoading } = useFirebase();
+  const userId = params.userId;
 
-  const userRef = useMemo(() => {
-    if (!firestore || !params.userId) return null;
-    return doc(firestore, 'users', params.userId);
-  }, [firestore, params.userId]);
-  const { data: profileUser, isLoading: isProfileLoading } = useDoc(userRef as any);
+  const userRef = useMemoFirebase(() => {
+    if (!firestore || !userId) return null;
+    return doc(firestore, 'users', userId);
+  }, [firestore, userId]);
+  const { data: profileUser, isLoading: isProfileLoading } = useDoc(userRef);
 
-  // TODO: Replace with real data fetching
-  const bookLists = fakeBookLists;
-  const isLoadingLists = false;
+  const privateListsQuery = useMemoFirebase(() => {
+    if (!firestore || !userId || currentUser?.uid !== userId) return null;
+    return query(collection(firestore, `users/${userId}/book_lists`));
+  }, [firestore, userId, currentUser?.uid]);
 
+  const publicListsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'public_book_lists'), where('userId', '==', userId));
+  }, [firestore, userId]);
+
+  const { data: privateLists, isLoading: isLoadingPrivate } = useCollection(privateListsQuery);
+  const { data: publicLists, isLoading: isLoadingPublic } = useCollection(publicListsQuery);
+
+  const bookLists = [...(privateLists || []), ...(publicLists || [])];
+  const isLoadingLists = isLoadingPrivate || isLoadingPublic;
 
   if (isUserLoading || isProfileLoading) {
     return (
@@ -43,13 +46,19 @@ export default function ProfilePage({ params }: { params: { userId: string } }) 
 
   if (!profileUser) {
     return (
-        <div className="flex h-screen w-full items-center justify-center bg-background">
-            <p>User not found.</p>
+        <div className="flex flex-col min-h-screen bg-background text-foreground">
+          <Header />
+          <main className="flex-grow flex items-center justify-center">
+            <div className="text-center">
+              <h1 className="text-2xl font-headline">User not found</h1>
+              <p className="text-muted-foreground">This profile could not be loaded.</p>
+            </div>
+          </main>
         </div>
     )
   }
 
-  const isOwnProfile = currentUser?.uid === params.userId;
+  const isOwnProfile = currentUser?.uid === userId;
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
@@ -97,19 +106,22 @@ export default function ProfilePage({ params }: { params: { userId: string } }) 
         ) : bookLists.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {bookLists.map((list) => (
-              <Card key={list.id} className="hover:shadow-lg hover:border-accent/50 transition-all">
+              <Card key={list.id} className="hover:shadow-lg hover:border-accent/50 transition-all flex flex-col">
                 <CardHeader>
                   <CardTitle className="font-headline">{list.name}</CardTitle>
                   <CardDescription>{list.isPublic ? 'Public List' : 'Private List'}</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground mb-4">{list.description}</p>
+                <CardContent className="flex-grow">
+                  <p className="text-muted-foreground mb-4 line-clamp-2">{list.description}</p>
                   <div className="flex justify-between items-center text-sm text-muted-foreground">
                       <div className="flex items-center gap-2">
                         <Book className="size-4"/>
-                        <span>{list.bookCount} books</span>
+                        <span>{list.books.length} {list.books.length === 1 ? 'book' : 'books'}</span>
                       </div>
-                      <span>{list.likes} likes</span>
+                      <div className="flex items-center gap-1">
+                        <span>{list.likes || 0}</span>
+                        <Heart className="size-4"/>
+                      </div>
                   </div>
                 </CardContent>
               </Card>
@@ -120,6 +132,11 @@ export default function ProfilePage({ params }: { params: { userId: string } }) 
                 <p className="text-muted-foreground">
                     {isOwnProfile ? "You haven't" : `${profileUser.displayName} hasn't`} created any book lists yet.
                 </p>
+                {isOwnProfile && (
+                    <Button variant="link" asChild className="mt-2">
+                        <Link href="/book-lists/new">Create one now</Link>
+                    </Button>
+                )}
             </div>
         )}
       </main>
