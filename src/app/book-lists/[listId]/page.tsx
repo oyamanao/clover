@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect, use } from 'react';
 import { useFirebase, useMemoFirebase } from '@/firebase';
-import { doc, updateDoc, increment, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { useDoc } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Header } from '@/components/app/header';
@@ -13,6 +13,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
 import { BookCover } from '@/components/app/book-cover';
 import { Separator } from '@/components/ui/separator';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
+
 
 function BookInList({ book }: { book: any }) {
     return (
@@ -105,7 +108,7 @@ export default function BookListPage({ params: paramsPromise }: { params: Promis
     
     const isOwner = user && finalListData && user.uid === finalListData.userId;
 
-    const handleLike = async () => {
+    const handleLike = () => {
         if (!user) {
             toast({ variant: 'destructive', title: 'You must be logged in to like a list.' });
             return;
@@ -117,19 +120,27 @@ export default function BookListPage({ params: paramsPromise }: { params: Promis
 
         if (!firestore || !finalListData.id) return;
         const docRef = doc(firestore, 'public_book_lists', finalListData.id);
-        try {
-            // Using setDoc with merge to ensure the document is created if it somehow doesn't exist
-            // while trying to increment. `increment` only works with `updateDoc`.
-            // A more robust way is to use a transaction, but for a simple like, this is okay.
-            const currentLikes = finalListData.likes || 0;
-            await setDoc(docRef, { likes: currentLikes + 1 }, { merge: true });
+        const currentLikes = finalListData.likes || 0;
+        const optimisticNewLikes = currentLikes + 1;
+        
+        // Optimistically update the UI
+        setFinalListData((prev: any) => ({ ...prev, likes: optimisticNewLikes }));
 
-            setFinalListData((prev: any) => ({ ...prev, likes: currentLikes + 1 }));
+        setDoc(docRef, { likes: optimisticNewLikes }, { merge: true })
+         .then(() => {
             toast({ title: 'Liked!', description: `You liked "${finalListData.name}"` });
-        } catch (error) {
-            console.error("Error liking list:", error);
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not like the list.' });
-        }
+         })
+         .catch(async (serverError) => {
+            // Revert optimistic update on error
+            setFinalListData((prev: any) => ({ ...prev, likes: currentLikes }));
+
+            const permissionError = new FirestorePermissionError({
+                path: docRef.path,
+                operation: 'update',
+                requestResourceData: { likes: optimisticNewLikes },
+            });
+            errorEmitter.emit('permission-error', permissionError);
+         });
     };
     
     const handleShare = () => {
