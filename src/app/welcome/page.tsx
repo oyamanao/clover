@@ -1,11 +1,11 @@
+
 'use client';
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFirebase } from '@/firebase';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
-import { doc } from 'firebase/firestore';
-import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { doc, setDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Loader2, LogIn, Clover } from 'lucide-react';
 
@@ -27,13 +27,13 @@ export default function WelcomePage() {
       const user = result.user;
       
       const userRef = doc(firestore, 'users', user.uid);
-      setDocumentNonBlocking(userRef, {
+      await setDoc(userRef, {
         uid: user.uid,
         email: user.email,
       }, { merge: true });
 
       const profileRef = doc(firestore, 'profiles', user.uid);
-      setDocumentNonBlocking(profileRef, {
+      await setDoc(profileRef, {
         uid: user.uid,
         displayName: user.displayName,
         photoURL: user.photoURL,
