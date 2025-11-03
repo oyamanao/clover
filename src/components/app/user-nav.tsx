@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -18,8 +19,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { LogIn, LogOut, User as UserIcon, Loader2 } from 'lucide-react';
-import { doc } from 'firebase/firestore';
-import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { doc, setDoc } from 'firebase/firestore';
 import Link from 'next/link';
 
 export function UserNav() {
@@ -33,13 +33,13 @@ export function UserNav() {
       const user = result.user;
       
       const userRef = doc(firestore, 'users', user.uid);
-      setDocumentNonBlocking(userRef, {
+      await setDoc(userRef, {
         uid: user.uid,
         email: user.email,
       }, { merge: true });
 
       const profileRef = doc(firestore, 'profiles', user.uid);
-      setDocumentNonBlocking(profileRef, {
+      await setDoc(profileRef, {
         uid: user.uid,
         displayName: user.displayName,
         photoURL: user.photoURL,
@@ -57,6 +57,7 @@ export function UserNav() {
   };
 
   const handleSignOut = async () => {
+    if (!auth) return;
     try {
       await signOut(auth);
     } catch (error) {
