@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect, use } from 'react';
 import { useFirebase, useMemoFirebase } from '@/firebase';
 import { doc, updateDoc, increment, getDoc } from 'firebase/firestore';
 import { useDoc } from '@/firebase';
@@ -33,8 +33,8 @@ function BookInList({ book }: { book: any }) {
     );
 }
 
-export default function BookListPage({ params }: { params: { listId: string } }) {
-    const { listId } = params;
+export default function BookListPage({ params: paramsPromise }: { params: Promise<{ listId: string }> }) {
+    const { listId } = use(paramsPromise);
     const { firestore, user } = useFirebase();
     const { toast } = useToast();
 
@@ -56,11 +56,11 @@ export default function BookListPage({ params }: { params: { listId: string } })
     const { data: listData, isLoading: isLoadingPublic } = useDoc(listRef);
     const { data: privateListData, isLoading: isLoadingPrivate } = useDoc(privateListRef);
     
-    const [finalListData, setFinalListData] = React.useState<any>(null);
-    const [isLoading, setIsLoading] = React.useState(true);
-    const [listOwner, setListOwner] = React.useState<any>(null);
+    const [finalListData, setFinalListData] = useState<any>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [listOwner, setListOwner] = useState<any>(null);
 
-     React.useEffect(() => {
+     useEffect(() => {
         const loadData = async () => {
             setIsLoading(true);
             let dataToShow = null;
@@ -102,6 +102,7 @@ export default function BookListPage({ params }: { params: { listId: string } })
             return;
         }
 
+        if (!firestore || !finalListData.id) return;
         const docRef = doc(firestore, 'public_book_lists', finalListData.id);
         try {
             await updateDoc(docRef, {
