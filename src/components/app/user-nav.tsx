@@ -32,14 +32,20 @@ export function UserNav() {
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
       
-      // Create user document in Firestore
       const userRef = doc(firestore, 'users', user.uid);
       setDocumentNonBlocking(userRef, {
         uid: user.uid,
         email: user.email,
+      }, { merge: true });
+
+      const profileRef = doc(firestore, 'profiles', user.uid);
+      setDocumentNonBlocking(profileRef, {
+        uid: user.uid,
         displayName: user.displayName,
         photoURL: user.photoURL,
+        email: user.email,
       }, { merge: true });
+
 
     } catch (error: any) {
       if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {

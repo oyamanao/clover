@@ -4,7 +4,28 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "User",
       "type": "object",
-      "description": "Represents a user of the BookWise AI application.",
+      "description": "Represents a user's private data in the BookWise AI application.",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Unique identifier for the user from Firebase Auth."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the user.",
+          "format": "email"
+        }
+      },
+      "required": [
+        "uid",
+        "email"
+      ]
+    },
+    "Profile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Profile",
+      "type": "object",
+      "description": "Represents a user's public profile data.",
       "properties": {
         "uid": {
           "type": "string",
@@ -20,13 +41,13 @@
           "description": "Display name of the user."
         },
         "photoURL": {
-            "type": "string",
-            "description": "URL of the user's profile picture."
+          "type": "string",
+          "description": "URL of the user's profile picture."
         }
       },
       "required": [
         "uid",
-        "email"
+        "displayName"
       ]
     },
     "BookList": {
@@ -59,7 +80,7 @@
           "type": "array",
           "description": "A list of books in this booklist.",
           "items": {
-             "$ref": "#/entities/Book"
+            "$ref": "#/entities/Book"
           }
         },
         "sharedWithUserIds": {
@@ -70,8 +91,8 @@
           }
         },
         "likes": {
-            "type": "integer",
-            "description": "Number of likes the book list has received."
+          "type": "integer",
+          "description": "Number of likes the book list has received."
         }
       },
       "required": [
@@ -104,8 +125,8 @@
           "description": "Description of the book."
         },
         "imageUrl": {
-            "type": "string",
-            "description": "URL for the book cover image."
+          "type": "string",
+          "description": "URL for the book cover image."
         }
       },
       "required": [
@@ -129,7 +150,23 @@
           "schema": {
             "$ref": "#/backend/entities/User"
           },
-          "description": "Stores user profile data.  Path-based ownership enforced via the `userId` parameter.",
+          "description": "Stores private user data. Path-based ownership enforced via the `userId` parameter.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/profiles/{userId}",
+        "definition": {
+          "entityName": "Profile",
+          "schema": {
+            "$ref": "#/backend/entities/Profile"
+          },
+          "description": "Stores public user profile data.",
           "params": [
             {
               "name": "userId",
@@ -175,6 +212,6 @@
         }
       }
     ],
-    "reasoning": "The Firestore structure is designed to support the BookWise AI application's book list and recommendation features. It prioritizes authorization independence and simplifies security rules. User data, book lists (both public and private), and individual books are stored in separate collections to ensure clarity and maintainability.\n\n1.  **Users Collection:** Stores user profiles, authenticated via Google Sign-in. The `users/{userId}` path makes ownership clear, and security rules can easily restrict access to a user's own profile data.\n\n2.  **Public Book Lists Collection:** Public book lists are stored in the `/public_book_lists` collection. Anyone can read from this collection. Creation is restricted to authenticated users who are validated in the rules. Writes are allowed by list owners only. This segregation supports the QAP of allowing public lists to be generally accessible without complex filtering.\n\n3.  **User-Owned Book Lists Collection:** Private book lists are stored within each user's document, at `/users/{userId}/book_lists/{bookListId}`. This path-based ownership allows simple and secure rules that restrict access to the book list creator.\n\n4.  **Books are embedded within book lists**: Instead of a global `/books` collection, books are now part of a subcollection within each book list. This simplifies data management as books are contextually tied to the list they belong to, eliminating the need for a separate top-level collection.\n\n**Authorization Independence:** The structure uses path-based ownership (e.g., `/users/{userId}/book_lists/{bookListId}`) and a dedicated `/public_book_lists` collection, eliminating the need for `get()` calls in security rules. If collaborative lists were needed, `sharedWithUserIds` would have been denormalized to a `members` map on the BookList to avoid get() calls.\n\n**QAPs:**\n\n*   Public book lists are easily accessible via the `/public_book_lists` collection.\n*   Private book lists are secured via path-based ownership under each user's document.\n*   List operations are supported efficiently due to the clear separation of public and private data."
+    "reasoning": "The Firestore structure is designed to support the BookWise AI application's book list and recommendation features. It prioritizes authorization independence and simplifies security rules. User data is split into private (`users`) and public (`profiles`) collections. Book lists (both public and private) and individual books are stored in separate collections to ensure clarity and maintainability.\n\n1.  **Users Collection:** Stores private user data, authenticated via Google Sign-in. The `users/{userId}` path makes ownership clear, and security rules can easily restrict access to a user's own private data.\n\n2.  **Profiles Collection:** Stores public user profiles that are readable by anyone but only writable by the owner. This allows for public display of user info without exposing sensitive data.\n\n3.  **Public Book Lists Collection:** Public book lists are stored in the `/public_book_lists` collection. Anyone can read from this collection. Creation is restricted to authenticated users who are validated in the rules. Writes are allowed by list owners only, with an exception for 'liking'.\n\n4.  **User-Owned Book Lists Collection:** Private book lists are stored within each user's document, at `/users/{userId}/book_lists/{bookListId}`. This path-based ownership allows simple and secure rules that restrict access to the book list creator.\n\n5.  **Books are embedded within book lists**: Instead of a global `/books` collection, books are now part of a subcollection within each book list. This simplifies data management as books are contextually tied to the list they belong to, eliminating the need for a separate top-level collection.\n\n**Authorization Independence:** The structure uses path-based ownership (e.g., `/users/{userId}/book_lists/{bookListId}`) and a dedicated `/public_book_lists` collection, eliminating the need for `get()` calls in security rules. If collaborative lists were needed, `sharedWithUserIds` would have been denormalized to a `members` map on the BookList to avoid get() calls.\n\n**QAPs:**\n\n*   Public book lists are easily accessible via the `/public_book_lists` collection.\n*   Private book lists are secured via path-based ownership under each user's document.\n*   List operations are supported efficiently due to the clear separation of public and private data."
   }
 }

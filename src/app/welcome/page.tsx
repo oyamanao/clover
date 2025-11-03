@@ -31,9 +31,16 @@ export default function WelcomePage() {
       setDocumentNonBlocking(userRef, {
         uid: user.uid,
         email: user.email,
+      }, { merge: true });
+
+      const profileRef = doc(firestore, 'profiles', user.uid);
+      setDocumentNonBlocking(profileRef, {
+        uid: user.uid,
         displayName: user.displayName,
         photoURL: user.photoURL,
+        email: user.email,
       }, { merge: true });
+
 
     } catch (error: any) {
       if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {

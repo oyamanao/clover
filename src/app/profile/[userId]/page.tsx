@@ -15,11 +15,11 @@ export default function ProfilePage({ params: paramsPromise }: { params: Promise
   const { userId } = use(paramsPromise);
   const { firestore, user: currentUser, isUserLoading } = useFirebase();
 
-  const userRef = useMemoFirebase(() => {
+  const profileUserRef = useMemoFirebase(() => {
     if (!firestore || !userId) return null;
-    return doc(firestore, 'users', userId);
+    return doc(firestore, 'profiles', userId);
   }, [firestore, userId]);
-  const { data: profileUser, isLoading: isProfileLoading } = useDoc(userRef);
+  const { data: profileUser, isLoading: isProfileLoading } = useDoc(profileUserRef);
 
   const privateListsQuery = useMemoFirebase(() => {
     // Only fetch private lists if the current user is viewing their own profile
