@@ -17,6 +17,8 @@ import { Loader2, Plus, Search, Trash2, XCircle, Book as BookIcon, BookImage } f
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Header } from '@/components/app/header';
 import { BookCover } from '@/components/app/book-cover';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export default function NewBookListPage() {
   const { firestore, user } = useFirebase();
@@ -72,37 +74,43 @@ export default function NewBookListPage() {
 
   const handleSaveList = async () => {
     if (!listName.trim()) {
-      toast({ variant: "destructive", title: "List name is required." });
+      toast({ variant: 'destructive', title: 'List name is required.' });
       return;
     }
-    if (!user) {
-       toast({ variant: "destructive", title: "You must be logged in." });
+    if (!user || !firestore) {
+      toast({ variant: 'destructive', title: 'You must be logged in.' });
       return;
     }
     setIsSaving(true);
-    try {
-      const collectionPath = isPublic ? 'public_book_lists' : `users/${user.uid}/book_lists`;
-      const bookListData = {
-        name: listName,
-        description,
-        isPublic,
-        userId: user.uid,
-        userName: user.displayName,
-        books: books.map(({id, ...rest}) => rest), // Remove temp id
-        createdAt: serverTimestamp(),
-        likes: 0,
-      };
-      
-      const docRef = await addDoc(collection(firestore, collectionPath), bookListData);
+    
+    const collectionPath = isPublic ? 'public_book_lists' : `users/${user.uid}/book_lists`;
+    const bookListData = {
+      name: listName,
+      description,
+      isPublic,
+      userId: user.uid,
+      userName: user.displayName,
+      books: books.map(({ id, ...rest }) => rest), // Remove temp id
+      createdAt: serverTimestamp(),
+      likes: 0,
+    };
 
-      toast({ title: "Book list created!", description: `"${listName}" has been saved.` });
-      router.push(`/profile/${user.uid}`);
+    const collectionRef = collection(firestore, collectionPath);
 
-    } catch (error) {
-      console.error("Error saving book list:", error);
-      toast({ variant: "destructive", title: "Error", description: "Could not save the book list." });
-      setIsSaving(false);
-    }
+    addDoc(collectionRef, bookListData)
+      .then((docRef) => {
+        toast({ title: 'Book list created!', description: `"${listName}" has been saved.` });
+        router.push(`/profile/${user.uid}`);
+      })
+      .catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: collectionRef.path,
+          operation: 'create',
+          requestResourceData: bookListData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        setIsSaving(false);
+      });
   };
   
   if (!user) {
