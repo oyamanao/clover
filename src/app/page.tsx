@@ -9,14 +9,9 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Loader2, ArrowRight } from "lucide-react";
 import { BookListCard } from "@/components/app/book-list-card";
-import { BookCard } from "@/components/app/book-card";
-import type { Book, BookWithListContext } from "@/lib/types";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { Card, CardContent, CardHeader } from "../components/ui/card";
 import { Clover, Sparkles } from "lucide-react";
-import { summarizeLibrary } from "@/ai/flows/summarize-library";
-import { generateBookRecommendations } from "@/ai/flows/generate-book-recommendations";
-import { useToast } from "@/hooks/use-toast";
 
 
 function SectionLoadingSkeleton({ count = 4 }: { count?: number }) {
@@ -38,31 +33,10 @@ function SectionLoadingSkeleton({ count = 4 }: { count?: number }) {
     );
 }
 
-function BookSectionLoadingSkeleton({ count = 6 }: { count?: number }) {
-    return (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6">
-            {[...Array(count)].map((_, i) => (
-                 <Card key={i} className="animate-pulse">
-                    <CardContent className="p-0">
-                        <div className="bg-muted-foreground/20 aspect-square w-full"></div>
-                        <div className="p-4 space-y-2">
-                            <div className="h-5 w-3/4 rounded bg-muted-foreground/20"></div>
-                            <div className="h-4 w-1/2 rounded bg-muted-foreground/20"></div>
-                        </div>
-                    </CardContent>
-                </Card>
-            ))}
-        </div>
-    );
-}
-
 export default function HomePage() {
     const { firestore, user, isUserLoading } = useFirebase();
     const router = useRouter();
-    const { toast } = useToast();
     const [recentlyViewedIds, setRecentlyViewedIds] = useLocalStorage<string[]>('recentlyViewedBookLists', []);
-    const [recommendedBooks, setRecommendedBooks] = useState<Book[]>([]);
-    const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(true);
     
     useEffect(() => {
         if (!isUserLoading && !user) {
@@ -93,62 +67,6 @@ export default function HomePage() {
         return [...(myPrivateLists || []), ...(myPublicLists || [])].sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)).slice(0,4);
     }, [myPrivateLists, myPublicLists]);
     
-    useEffect(() => {
-        async function fetchRecommendations() {
-            if (!myLists || myLists.length === 0) {
-                setIsLoadingRecommendations(false);
-                return;
-            }
-
-            setIsLoadingRecommendations(true);
-            try {
-                // Combine books from user's lists
-                const libraryBooks = myLists.flatMap(list => list.books || []);
-                if (libraryBooks.length === 0) {
-                    setIsLoadingRecommendations(false);
-                    return;
-                }
-
-                const libraryContent = libraryBooks.map(b => `${b.title} by ${b.author}`).join('\n');
-                const summary = await summarizeLibrary({ books: libraryContent });
-                
-                if (summary.summary) {
-                    const recommendationsResult = await generateBookRecommendations({ preferences: summary.summary });
-                    
-                    const parsedRecommendations = recommendationsResult.recommendations
-                        .split(/\n\s*\n/)
-                        .map((rec, index) => {
-                            const titleMatch = rec.match(/\*\*Title:\*\*\s*(.*)/);
-                            const authorMatch = rec.match(/\*\*Author:\*\*\s*(.*)/);
-                            const reasonMatch = rec.match(/\*\*Reason:\*\*\s*([\s\S]*)/);
-                            return {
-                                id: Date.now() + index,
-                                title: titleMatch ? titleMatch[1].trim() : 'Unknown Title',
-                                author: authorMatch ? authorMatch[1].trim() : 'Unknown Author',
-                                description: reasonMatch ? reasonMatch[1].trim() : rec,
-                                imageUrl: `https://picsum.photos/seed/${Date.now() + index}/600/800`,
-                            };
-                        })
-                        .filter(book => book.title !== 'Unknown Title');
-
-                    setRecommendedBooks(parsedRecommendations.slice(0, 6));
-                }
-            } catch (error) {
-                console.error("Failed to fetch AI recommendations:", error);
-                 // Silently fail is okay here, just won't show recommendations
-                 setRecommendedBooks([]);
-            } finally {
-                setIsLoadingRecommendations(false);
-            }
-        }
-
-        // Only fetch recommendations when the user's lists are loaded
-        if (!isLoadingMyPrivate && !isLoadingMyPublic) {
-            fetchRecommendations();
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [myLists, isLoadingMyPrivate, isLoadingMyPublic]);
-
     const isLoadingMyLists = isLoadingMyPrivate || isLoadingMyPublic;
     
     const recentlyViewedLists = useMemo(() => {
@@ -184,22 +102,22 @@ export default function HomePage() {
                 <section>
                     <div className="flex justify-between items-center mb-6">
                         <h2 className="text-2xl md:text-3xl font-headline flex items-center gap-2">
-                           <Sparkles /> Recommended For You
+                           <Sparkles /> Featured Book Lists
                         </h2>
                          <Button variant="link" asChild>
                             <Link href="/recommendations">
-                                Get New Recommendations <ArrowRight className="ml-2"/>
+                                Get AI Recommendations <ArrowRight className="ml-2"/>
                             </Link>
                         </Button>
                     </div>
-                    {isLoadingRecommendations ? (
-                        <BookSectionLoadingSkeleton />
-                    ) : recommendedBooks.length > 0 ? (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6">
-                            {recommendedBooks.map((book, i) => <BookCard key={i} book={{...book, listId: 'recommendation', listName: 'Recommendation'}} />)}
+                    {isLoadingPublic ? (
+                        <SectionLoadingSkeleton />
+                    ) : publicLists && publicLists.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                           {publicLists.slice(0, 4).map(list => <BookListCard key={list.id} list={list} />)}
                         </div>
                     ) : (
-                        <p className="text-muted-foreground">No recommendations available right now. Try creating a book list!</p>
+                        <p className="text-muted-foreground">No public book lists available right now.</p>
                     )}
                 </section>
 
@@ -242,5 +160,3 @@ export default function HomePage() {
         </div>
     );
 }
-
-    
