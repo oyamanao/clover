@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -16,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { BookDetailsDialog } from "./book-details-dialog";
 
 function RecommendationItem({ recommendation }: { recommendation: string }) {
     // Naively parse fields
@@ -28,6 +30,8 @@ function RecommendationItem({ recommendation }: { recommendation: string }) {
     const book: Partial<BookSearchResult> = {
       title: titleMatch ? titleMatch[1].trim() : 'Unknown Title',
       author: authorMatch ? authorMatch[1].trim() : 'Unknown Author',
+      description: reasonMatch ? reasonMatch[1].trim() : recommendation,
+      imageUrl: '', // No image available in this context
     };
 
     if (!titleMatch) {
@@ -37,9 +41,11 @@ function RecommendationItem({ recommendation }: { recommendation: string }) {
   return (
     <Card className="mt-3 bg-card/80 backdrop-blur-sm border-accent/20">
       <CardHeader className="p-4">
-        <CardTitle className="text-base font-headline flex items-center gap-2">
-          <BookHeart className="text-accent" /> {book.title}
-        </CardTitle>
+        <BookDetailsDialog book={book}>
+            <CardTitle className="text-base font-headline flex items-center gap-2 hover:underline cursor-pointer">
+                <BookHeart className="text-accent" /> {book.title}
+            </CardTitle>
+        </BookDetailsDialog>
         <CardDescription className="text-xs !mt-1">by {book.author}</CardDescription>
       </CardHeader>
       <CardContent className="p-4 pt-0">

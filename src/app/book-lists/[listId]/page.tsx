@@ -18,6 +18,7 @@ import { FirestorePermissionError } from '@/firebase/errors';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import { useLocalStorage } from '@/hooks/use-local-storage';
+import { BookDetailsDialog } from '@/components/app/book-details-dialog';
 
 
 function BookInList({ book }: { book: any }) {
@@ -31,7 +32,9 @@ function BookInList({ book }: { book: any }) {
                 className="rounded-md shadow-md"
             />
             <div className="flex-grow">
-                <h3 className="text-lg font-semibold font-headline">{book.title}</h3>
+                 <BookDetailsDialog book={book}>
+                    <h3 className="text-lg font-semibold font-headline hover:underline cursor-pointer">{book.title}</h3>
+                </BookDetailsDialog>
                 <p className="text-sm text-muted-foreground">by {book.author}</p>
                 <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2 flex-wrap">
                     {book.averageRating > 0 && <div className="flex items-center gap-1"><Star className="size-3" /> {book.averageRating.toFixed(1)}</div>}

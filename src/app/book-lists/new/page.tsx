@@ -19,6 +19,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { BookCover } from '@/components/app/book-cover';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { BookDetailsDialog } from '@/components/app/book-details-dialog';
 
 export default function NewBookListPage() {
   const { firestore, user } = useFirebase();
@@ -201,7 +202,9 @@ export default function NewBookListPage() {
                                             >
                                                 <BookCover src={book.imageUrl} alt={`Cover of ${book.title}`} width={64} height={96} className="rounded-md" />
                                                 <div className="flex-grow">
-                                                    <p className="font-semibold">{book.title}</p>
+                                                     <BookDetailsDialog book={book}>
+                                                        <p className="font-semibold hover:underline cursor-pointer">{book.title}</p>
+                                                    </BookDetailsDialog>
                                                     <p className="text-sm text-muted-foreground">by {book.author}</p>
                                                     {isAdded ? (
                                                         <Button size="sm" disabled className="mt-2">
@@ -240,7 +243,9 @@ export default function NewBookListPage() {
                                         <div className="flex items-center gap-3">
                                             <BookCover src={book.imageUrl} alt={`Cover of ${book.title}`} width={40} height={60} className="rounded" />
                                             <div>
-                                                <p className="font-semibold">{book.title}</p>
+                                                 <BookDetailsDialog book={book}>
+                                                    <p className="font-semibold hover:underline cursor-pointer">{book.title}</p>
+                                                </BookDetailsDialog>
                                                 <p className="text-muted-foreground">by {book.author}</p>
                                             </div>
                                         </div>

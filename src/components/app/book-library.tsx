@@ -38,6 +38,7 @@ import { collection, query, where } from "firebase/firestore";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { BookDetailsDialog } from "./book-details-dialog";
 
 
 interface BookLibraryProps {
@@ -237,7 +238,9 @@ export function BookLibrary({ books, onAddBook, onAddMultipleBooks, onRemoveBook
                         className="rounded-md"
                       />
                       <div className="flex-grow">
-                        <p className="font-semibold">{book.title}</p>
+                        <BookDetailsDialog book={book}>
+                            <p className="font-semibold hover:underline cursor-pointer">{book.title}</p>
+                        </BookDetailsDialog>
                         <p className="text-sm text-muted-foreground">
                           by {book.author}
                         </p>
@@ -248,14 +251,7 @@ export function BookLibrary({ books, onAddBook, onAddMultipleBooks, onRemoveBook
                         ) : (
                             <Button
                             size="sm"
-                            onClick={() =>
-                                onAddBook({
-                                title: book.title,
-                                author: book.author,
-                                description: book.description,
-                                imageUrl: book.imageUrl
-                                })
-                            }
+                            onClick={() => onAddBook(book)}
                             className="mt-2"
                             >
                             <Plus className="mr-2" /> Add
@@ -315,7 +311,9 @@ export function BookLibrary({ books, onAddBook, onAddMultipleBooks, onRemoveBook
                         className="rounded"
                       />
                       <div>
-                        <p className="font-semibold">{book.title}</p>
+                        <BookDetailsDialog book={book}>
+                            <p className="font-semibold hover:underline cursor-pointer">{book.title}</p>
+                        </BookDetailsDialog>
                         <p className="text-muted-foreground">by {book.author}</p>
                       </div>
                     </div>
@@ -364,5 +362,3 @@ export function BookLibrary({ books, onAddBook, onAddMultipleBooks, onRemoveBook
     </Card>
   );
 }
-
-    
