@@ -67,7 +67,7 @@ export default function RecommendationsPage() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to refresh preferences.",
+        description: "Failed to refresh preferences. The AI service may be temporarily unavailable.",
       });
     } finally {
       setIsSummarizing(false);
@@ -173,8 +173,8 @@ export default function RecommendationsPage() {
       console.error(error);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to generate recommendations.",
+        title: "Error Generating Recommendations",
+        description: "The AI service might be temporarily unavailable. Please try again later.",
       });
     } finally {
       setIsGenerating(false);
@@ -226,7 +226,7 @@ export default function RecommendationsPage() {
       const errorMessage: ChatMessage = {
         id: Date.now() + 1,
         role: "assistant",
-        content: "Sorry, I encountered an error. Please try again.",
+        content: "Sorry, I encountered an error. The AI service may be temporarily unavailable. Please try again in a moment.",
       };
       setChatHistory((prev) => [...prev, errorMessage]);
       toast({
@@ -321,5 +321,3 @@ export default function RecommendationsPage() {
     </div>
   );
 }
-
-    
