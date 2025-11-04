@@ -4,11 +4,11 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { BookCover } from "@/components/app/book-cover";
 import Link from "next/link";
-import type { BookWithListContext } from "@/lib/types";
+import type { Book, BookWithListContext } from "@/lib/types";
 import { BookDetailsDialog } from "./book-details-dialog";
 
 
-export function BookCard({ book }: { book: BookWithListContext }) {
+export function BookCard({ book }: { book: Book | BookWithListContext }) {
 
   const cardContent = (
     <Card className="overflow-hidden h-full transition-all group-hover:shadow-lg group-hover:border-accent/50">
@@ -17,7 +17,7 @@ export function BookCard({ book }: { book: BookWithListContext }) {
             src={book.imageUrl} 
             alt={`Cover of ${book.title}`} 
             className="w-full object-cover"
-            aspectRatio="square"
+            aspectRatio="portrait"
           />
           <div className="p-4">
              <h3 className="font-semibold font-headline line-clamp-2 h-12 group-hover:text-accent">{book.title}</h3>
@@ -27,15 +27,16 @@ export function BookCard({ book }: { book: BookWithListContext }) {
       </Card>
   );
 
-  // If it's a recommendation, open a dialog. Otherwise, link to the list.
-  if (book.listId === 'recommendation') {
+  // If it's a recommendation or doesn't have a listId, open a dialog.
+  if (!('listId' in book) || book.listId === 'recommendation') {
     return (
         <BookDetailsDialog book={book}>
             <div className="block group cursor-pointer">{cardContent}</div>
         </BookDetailsDialog>
     );
   }
-
+  
+  // Otherwise, link to the book list it belongs to.
   return (
     <Link href={`/book-lists/${book.listId}`} className="block group">
       {cardContent}

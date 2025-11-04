@@ -12,21 +12,20 @@ import { BookListCard } from "@/components/app/book-list-card";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { Card, CardContent, CardHeader } from "../components/ui/card";
 import { Clover, Sparkles } from "lucide-react";
+import { BookCard } from "@/components/app/book-card";
+import type { BookWithListContext } from "@/lib/types";
 
 
 function SectionLoadingSkeleton({ count = 4 }: { count?: number }) {
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {[...Array(count)].map((_, i) => (
                 <Card key={i} className="animate-pulse">
-                    <CardHeader>
-                        <div className="h-6 w-3/4 rounded bg-muted-foreground/20"></div>
+                    <div className="aspect-[2/3] w-full bg-muted-foreground/20 rounded-t-lg"></div>
+                    <CardHeader className="p-4">
+                        <div className="h-5 w-3/4 rounded bg-muted-foreground/20"></div>
                         <div className="h-4 w-1/2 rounded bg-muted-foreground/20 mt-2"></div>
                     </CardHeader>
-                    <CardContent>
-                        <div className="h-4 w-full rounded bg-muted-foreground/20"></div>
-                        <div className="h-4 w-5/6 rounded bg-muted-foreground/20 mt-2"></div>
-                    </CardContent>
                 </Card>
             ))}
         </div>
@@ -36,7 +35,7 @@ function SectionLoadingSkeleton({ count = 4 }: { count?: number }) {
 export default function HomePage() {
     const { firestore, user, isUserLoading } = useFirebase();
     const router = useRouter();
-    const [recentlyViewedIds, setRecentlyViewedIds] = useLocalStorage<string[]>('recentlyViewedBookLists', []);
+    const [recentlyViewedIds] = useLocalStorage<string[]>('recentlyViewedBookLists', []);
     
     useEffect(() => {
         if (!isUserLoading && !user) {
@@ -69,18 +68,34 @@ export default function HomePage() {
     
     const isLoadingMyLists = isLoadingMyPrivate || isLoadingMyPublic;
     
-    const recentlyViewedLists = useMemo(() => {
-        if (!publicLists || recentlyViewedIds.length === 0) return [];
+    const featuredBooks: BookWithListContext[] = useMemo(() => {
+        if (!publicLists) return [];
+
+        const bookMap = new Map<string, BookWithListContext>();
+
+        const addBooksFromList = (list: any) => {
+            if (!list?.books) return;
+            for (const book of list.books) {
+                const uniqueKey = `${book.title}-${book.author}`;
+                if (!bookMap.has(uniqueKey)) {
+                    bookMap.set(uniqueKey, { ...book, listId: list.id, listName: list.name });
+                }
+            }
+        };
+
+        // Prioritize recently viewed lists
+        const recentlyViewedLists = recentlyViewedIds
+            .map(id => publicLists.find(list => list.id === id))
+            .filter(Boolean);
+
+        recentlyViewedLists.forEach(addBooksFromList);
         
-        const listMap = new Map(publicLists.map(list => [list.id, list]));
-        return recentlyViewedIds.map(id => listMap.get(id)).filter(Boolean).slice(0, 4);
+        // Then add from the latest public lists
+        publicLists.forEach(addBooksFromList);
+
+        return Array.from(bookMap.values()).slice(0, 8); // Take up to 8 unique books
     }, [publicLists, recentlyViewedIds]);
     
-    const handleRemoveFromRecentlyViewed = (listId: string) => {
-        setRecentlyViewedIds(prev => prev.filter(id => id !== listId));
-    };
-
-
     if (isUserLoading || !user) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -102,7 +117,7 @@ export default function HomePage() {
                 <section>
                     <div className="flex justify-between items-center mb-6">
                         <h2 className="text-2xl md:text-3xl font-headline flex items-center gap-2">
-                           <Sparkles /> Featured Book Lists
+                           <Sparkles /> Featured Books
                         </h2>
                          <Button variant="link" asChild>
                             <Link href="/recommendations">
@@ -111,51 +126,42 @@ export default function HomePage() {
                         </Button>
                     </div>
                     {isLoadingPublic ? (
-                        <SectionLoadingSkeleton />
-                    ) : publicLists && publicLists.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-                           {publicLists.slice(0, 4).map(list => <BookListCard key={list.id} list={list} />)}
+                        <SectionLoadingSkeleton count={8} />
+                    ) : featuredBooks && featuredBooks.length > 0 ? (
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                           {featuredBooks.map(book => <BookCard key={`${book.listId}-${book.title}`} book={book} />)}
                         </div>
                     ) : (
-                        <p className="text-muted-foreground">No public book lists available right now.</p>
+                        <p className="text-muted-foreground">No featured books available right now.</p>
                     )}
                 </section>
 
-                {recentlyViewedLists.length > 0 && (
+                {myLists.length > 0 && (
                      <section>
                         <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl md:text-3xl font-headline">Recently Viewed</h2>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-                            {recentlyViewedLists.map(list => list && <BookListCard key={list.id} list={list} showDelete onRemove={handleRemoveFromRecentlyViewed} />)}
-                        </div>
-                    </section>
-                )}
-
-                <section>
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-2xl md:text-3xl font-headline">My Book Lists</h2>
-                         {myLists && myLists.length > 0 && (
+                            <h2 className="text-2xl md:text-3xl font-headline">My Book Lists</h2>
                              <Link href={`/profile/${user.uid}`} passHref>
                                 <Button variant="link">View All <ArrowRight className="ml-2"/></Button>
                              </Link>
-                         )}
-                    </div>
-                     {isLoadingMyLists ? <SectionLoadingSkeleton /> : (
-                         myLists && myLists.length > 0 ? (
+                        </div>
+                        {isLoadingMyLists ? <SectionLoadingSkeleton /> : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-                                {myLists.map(list => <BookListCard key={list.id} list={list} />)}
+                                {myLists.slice(0, 4).map(list => <BookListCard key={list.id} list={list} />)}
                             </div>
-                        ) : (
-                             <div className="text-center py-12 md:py-16 border-2 border-dashed rounded-lg">
-                                <p className="text-muted-foreground">You haven't created any book lists yet.</p>
-                                <Button variant="link" asChild className="mt-2">
-                                    <Link href="/book-lists/new">Create one now</Link>
-                                </Button>
-                            </div>
-                        )
-                    )}
-                </section>
+                        )}
+                    </section>
+                )}
+
+                {!isLoadingMyLists && myLists.length === 0 && (
+                    <section>
+                         <div className="text-center py-12 md:py-16 border-2 border-dashed rounded-lg">
+                            <p className="text-muted-foreground">You haven't created any book lists yet.</p>
+                            <Button variant="link" asChild className="mt-2">
+                                <Link href="/book-lists/new">Create one now</Link>
+                            </Button>
+                        </div>
+                    </section>
+                )}
             </main>
         </div>
     );

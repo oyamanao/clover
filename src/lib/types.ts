@@ -1,5 +1,6 @@
+
 export interface Book {
-  id: number;
+  id?: number; // Optional because search results might not have it
   title: string;
   author: string;
   description: string;
@@ -10,7 +11,7 @@ export interface Book {
   language?: string;
 }
 
-export interface BookWithListContext extends Omit<Book, 'id'> {
+export interface BookWithListContext extends Book {
     listId: string;
     listName: string;
 }
