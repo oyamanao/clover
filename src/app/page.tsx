@@ -14,7 +14,9 @@ import type { Book, BookWithListContext } from "@/lib/types";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { Card, CardContent, CardHeader } from "../components/ui/card";
 import { Clover, Sparkles } from "lucide-react";
-import { featuredBooks } from "@/lib/placeholder-images";
+import { summarizeLibrary } from "@/ai/flows/summarize-library";
+import { generateBookRecommendations } from "@/ai/flows/generate-book-recommendations";
+import { useToast } from "@/hooks/use-toast";
 
 
 function SectionLoadingSkeleton({ count = 4 }: { count?: number }) {
@@ -57,7 +59,10 @@ function BookSectionLoadingSkeleton({ count = 6 }: { count?: number }) {
 export default function HomePage() {
     const { firestore, user, isUserLoading } = useFirebase();
     const router = useRouter();
+    const { toast } = useToast();
     const [recentlyViewedIds, setRecentlyViewedIds] = useLocalStorage<string[]>('recentlyViewedBookLists', []);
+    const [recommendedBooks, setRecommendedBooks] = useState<Book[]>([]);
+    const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(true);
     
     useEffect(() => {
         if (!isUserLoading && !user) {
@@ -88,6 +93,62 @@ export default function HomePage() {
         return [...(myPrivateLists || []), ...(myPublicLists || [])].sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)).slice(0,4);
     }, [myPrivateLists, myPublicLists]);
     
+    useEffect(() => {
+        async function fetchRecommendations() {
+            if (!myLists || myLists.length === 0) {
+                setIsLoadingRecommendations(false);
+                return;
+            }
+
+            setIsLoadingRecommendations(true);
+            try {
+                // Combine books from user's lists
+                const libraryBooks = myLists.flatMap(list => list.books || []);
+                if (libraryBooks.length === 0) {
+                    setIsLoadingRecommendations(false);
+                    return;
+                }
+
+                const libraryContent = libraryBooks.map(b => `${b.title} by ${b.author}`).join('\n');
+                const summary = await summarizeLibrary({ books: libraryContent });
+                
+                if (summary.summary) {
+                    const recommendationsResult = await generateBookRecommendations({ preferences: summary.summary });
+                    
+                    const parsedRecommendations = recommendationsResult.recommendations
+                        .split(/\n\s*\n/)
+                        .map((rec, index) => {
+                            const titleMatch = rec.match(/\*\*Title:\*\*\s*(.*)/);
+                            const authorMatch = rec.match(/\*\*Author:\*\*\s*(.*)/);
+                            const reasonMatch = rec.match(/\*\*Reason:\*\*\s*([\s\S]*)/);
+                            return {
+                                id: Date.now() + index,
+                                title: titleMatch ? titleMatch[1].trim() : 'Unknown Title',
+                                author: authorMatch ? authorMatch[1].trim() : 'Unknown Author',
+                                description: reasonMatch ? reasonMatch[1].trim() : rec,
+                                imageUrl: `https://picsum.photos/seed/${Date.now() + index}/600/800`,
+                            };
+                        })
+                        .filter(book => book.title !== 'Unknown Title');
+
+                    setRecommendedBooks(parsedRecommendations.slice(0, 6));
+                }
+            } catch (error) {
+                console.error("Failed to fetch AI recommendations:", error);
+                 // Silently fail is okay here, just won't show recommendations
+                 setRecommendedBooks([]);
+            } finally {
+                setIsLoadingRecommendations(false);
+            }
+        }
+
+        // Only fetch recommendations when the user's lists are loaded
+        if (!isLoadingMyPrivate && !isLoadingMyPublic) {
+            fetchRecommendations();
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [myLists, isLoadingMyPrivate, isLoadingMyPublic]);
+
     const isLoadingMyLists = isLoadingMyPrivate || isLoadingMyPublic;
     
     const recentlyViewedLists = useMemo(() => {
@@ -123,20 +184,23 @@ export default function HomePage() {
                 <section>
                     <div className="flex justify-between items-center mb-6">
                         <h2 className="text-2xl md:text-3xl font-headline flex items-center gap-2">
-                           <Sparkles /> Featured Books
+                           <Sparkles /> Recommended For You
                         </h2>
                          <Button variant="link" asChild>
                             <Link href="/recommendations">
-                                Get AI Recommendations <ArrowRight className="ml-2"/>
+                                Get New Recommendations <ArrowRight className="ml-2"/>
                             </Link>
                         </Button>
                     </div>
-                    {featuredBooks && featuredBooks.length > 0 ? (
+                    {isLoadingRecommendations ? (
+                        <BookSectionLoadingSkeleton />
+                    ) : recommendedBooks.length > 0 ? (
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6">
-                            {featuredBooks.map((book, i) => <BookCard key={i} book={{...book, listId: 'recommendation', listName: 'Recommendation'}} />)}
+                            {recommendedBooks.map((book, i) => <BookCard key={i} book={{...book, listId: 'recommendation', listName: 'Recommendation'}} />)}
                         </div>
-                    ) : <p className="text-muted-foreground">No featured books available right now.</p>
-                    }
+                    ) : (
+                        <p className="text-muted-foreground">No recommendations available right now. Try creating a book list!</p>
+                    )}
                 </section>
 
                 {recentlyViewedLists.length > 0 && (
@@ -178,3 +242,5 @@ export default function HomePage() {
         </div>
     );
 }
+
+    
