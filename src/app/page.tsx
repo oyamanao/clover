@@ -45,11 +45,16 @@ export default function HomePage() {
     const router = useRouter();
     const { toast } = useToast();
     
-    const [recommendations, setRecommendations] = useLocalStorage<CachedRecommendations | null>('homepage-recommendations', null);
+    const recommendationsCacheKey = useMemo(() => user ? `homepage-recs-${user.uid}` : null, [user]);
+    const [recommendations, setRecommendations] = useLocalStorage<CachedRecommendations | null>(recommendationsCacheKey || 'homepage-recs-fallback', null);
     const [isGeneratingRecs, setIsGeneratingRecs] = useState(false);
     
     useEffect(() => {
         if (!isUserLoading && !user) {
+            // Clear any lingering cache on logout
+            if (localStorage.getItem('homepage-recs-fallback')) {
+                localStorage.removeItem('homepage-recs-fallback');
+            }
             router.push('/welcome');
         }
     }, [isUserLoading, user, router]);
