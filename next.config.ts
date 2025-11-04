@@ -52,6 +52,12 @@ const nextConfig: NextConfig = {
         hostname: 'images-na.ssl-images-amazon.com',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'yenpress.com',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
