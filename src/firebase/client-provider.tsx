@@ -24,11 +24,15 @@ function initializeFirebase() {
   const firebaseConfig = {
     projectId: "studio-5785792637-546f1",
     appId: "1:1041815318927:web:eeffa24a495a821738dbfa",
-    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY, // This is the crucial part
     authDomain: "studio-5785792637-546f1.firebaseapp.com",
     measurementId: "",
     messagingSenderId: "1041815318927"
   };
+
+  if (!firebaseConfig.apiKey) {
+      throw new Error('NEXT_PUBLIC_FIREBASE_API_KEY is not set in the environment variables');
+  }
 
   if (getApps().length) {
     return getSdks(getApp());
@@ -50,13 +54,18 @@ export function FirebaseClientProvider({ children }: FirebaseClientProviderProps
   useEffect(() => {
     // This effect runs only on the client, after the component has mounted.
     if (typeof window !== 'undefined') {
-      const services = initializeFirebase();
-      setFirebaseServices(services);
+      try {
+        const services = initializeFirebase();
+        setFirebaseServices(services);
+      } catch (error) {
+        console.error("Firebase initialization failed:", error);
+      }
     }
   }, []);
 
   if (!firebaseServices) {
     // Render nothing or a loading spinner until Firebase is initialized.
+    // This also prevents children from rendering before Firebase is ready.
     return null;
   }
 
