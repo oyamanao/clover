@@ -17,7 +17,7 @@ export function BookCard({ book }: { book: Book | BookWithListContext }) {
             src={book.imageUrl} 
             alt={`Cover of ${book.title}`} 
             className="w-full object-cover"
-            aspectRatio="portrait"
+            aspectRatio="square"
           />
           <div className="p-4">
              <h3 className="font-semibold font-headline line-clamp-2 h-12 group-hover:text-accent">{book.title}</h3>

@@ -55,7 +55,6 @@ export function BookCover({ src, alt, width, height, className, aspectRatio = 'p
               "object-cover transition-opacity duration-300",
               isLoaded ? "opacity-100" : "opacity-0"
           )}
-          unoptimized
           onError={() => setError(true)}
           onLoad={() => setIsLoaded(true)}
         />
