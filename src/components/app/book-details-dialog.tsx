@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "../ui/button";
 import { BookCover } from "./book-cover";
 import type { Book, BookWithListContext } from "@/lib/types";
@@ -17,6 +17,10 @@ export function BookDetailsDialog({ book, children }: { book: Book | BookWithLis
         <Dialog>
             <DialogTrigger asChild>{children}</DialogTrigger>
             <DialogContent className="max-w-3xl">
+                <DialogHeader>
+                    <DialogTitle className="sr-only">{book.title}</DialogTitle>
+                    <DialogDescription className="sr-only">Details for the book: {book.title} by {book.author}.</DialogDescription>
+                </DialogHeader>
                 <div className="flex flex-col sm:flex-row gap-6">
                     <div className="w-full sm:w-1/3 flex-shrink-0">
                          <BookCover 
