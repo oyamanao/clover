@@ -58,6 +58,12 @@ const nextConfig: NextConfig = {
         hostname: 'yenpress.com',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'i.gr-assets.com',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
