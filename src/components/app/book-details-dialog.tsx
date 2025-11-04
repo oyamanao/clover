@@ -7,11 +7,13 @@ import { BookCover } from "./book-cover";
 import type { Book, BookWithListContext } from "@/lib/types";
 import { Star, FileText, Globe, Building } from 'lucide-react';
 import Link from "next/link";
+import { Separator } from "../ui/separator";
 
 
 export function BookDetailsDialog({ book, children }: { book: Book | BookWithListContext, children: React.ReactNode }) {
     
     const isBookWithContext = 'listId' in book && book.listId !== 'recommendation';
+    const hasMetadata = book.averageRating || book.pageCount || book.publisher || book.language;
 
     return (
         <Dialog>
@@ -33,14 +35,17 @@ export function BookDetailsDialog({ book, children }: { book: Book | BookWithLis
                         <h2 className="text-2xl font-bold font-headline">{book.title}</h2>
                         <p className="text-lg text-muted-foreground">by {book.author}</p>
                         
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground mt-4 flex-wrap">
-                            {book.averageRating && book.averageRating > 0 && <div className="flex items-center gap-1.5"><Star className="size-4 text-amber-400" /> {book.averageRating.toFixed(1)} / 5</div>}
-                            {book.pageCount && book.pageCount > 0 && <div className="flex items-center gap-1.5"><FileText className="size-4" /> {book.pageCount} pages</div>}
-                        </div>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2 flex-wrap">
-                             {book.publisher && <div className="flex items-center gap-1.5"><Building className="size-4" /> {book.publisher}</div>}
-                            {book.language && <div className="flex items-center gap-1.5"><Globe className="size-4" /> {book.language.toUpperCase()}</div>}
-                        </div>
+                        {hasMetadata && (
+                           <>
+                             <Separator className="my-4"/>
+                             <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm text-muted-foreground">
+                                {book.averageRating && book.averageRating > 0 && <div className="flex items-center gap-2"><Star className="size-4 text-amber-400" /> <span>{book.averageRating.toFixed(1)} / 5 rating</span></div>}
+                                {book.pageCount && book.pageCount > 0 && <div className="flex items-center gap-2"><FileText className="size-4" /> <span>{book.pageCount} pages</span></div>}
+                                {book.publisher && <div className="flex items-center gap-2"><Building className="size-4" /> <span>{book.publisher}</span></div>}
+                                {book.language && <div className="flex items-center gap-2"><Globe className="size-4" /> <span>{book.language.toUpperCase()}</span></div>}
+                            </div>
+                           </>
+                        )}
                         
                         <p className="mt-4 text-foreground/80 max-h-48 overflow-y-auto">{book.description}</p>
                         
