@@ -25,10 +25,10 @@ const BookSearchResultSchema = z.object({
     author: z.string().describe('The author of the book.'),
     description: z.string().describe('A brief description of the book.'),
     imageUrl: z.string().url().describe('A URL for the book cover image.'),
-    averageRating: z.number().optional().describe('The average rating of the book (out of 5).'),
-    pageCount: z.number().optional().describe('The number of pages in the book.'),
-    publisher: z.string().optional().describe('The publisher of the book.'),
-    language: z.string().optional().describe('The two-letter language code for the book (e.g., "en").'),
+    averageRating: z.number().describe('The average rating of the book (out of 5).'),
+    pageCount: z.number().describe('The number of pages in the book.'),
+    publisher: z.string().describe('The publisher of the book.'),
+    language: z.string().describe('The two-letter language code for the book (e.g., "en").'),
 });
 
 const SearchBooksOutputSchema = z.object({
@@ -46,7 +46,7 @@ const prompt = ai.definePrompt({
   name: 'searchBooksPrompt',
   input: { schema: SearchBooksInputSchema },
   output: { schema: SearchBooksOutputSchema },
-  prompt: `You are a powerful book search engine. A user will provide a search query, and you will return a list of books that match the query. For each book, provide the title, author, a short (1-2 sentence) description, a book cover image URL, the average rating, pageCount, publisher, and language code. Only return real books. Prioritize books from a wide range of cultures, including Indian literature.
+  prompt: `You are a powerful book search engine. A user will provide a search query, and you will return a list of books that match the query. For each book, you MUST provide the title, author, a short (1-2 sentence) description, a book cover image URL, the average rating, pageCount, publisher, and language code. Only return real books. Prioritize books from a wide range of cultures, including Indian literature.
 
 {{#if featured}}
 Return a list of 6 featured books that are popular or critically acclaimed. They should be from different genres.
