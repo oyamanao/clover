@@ -6,10 +6,10 @@ export interface Book {
   author: string;
   description: string;
   imageUrl: string;
-  averageRating?: number;
-  pageCount?: number;
-  publisher?: string;
-  language?: string;
+  averageRating: number;
+  pageCount: number;
+  publisher: string;
+  language: string;
 }
 
 export interface BookWithListContext extends Book {

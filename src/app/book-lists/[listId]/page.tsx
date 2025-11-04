@@ -18,9 +18,10 @@ import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { BookDetailsDialog } from '@/components/app/book-details-dialog';
+import type { Book as BookType } from '@/lib/types';
 
 
-function BookInList({ book }: { book: any }) {
+function BookInList({ book }: { book: BookType }) {
     return (
         <div className="flex items-start gap-4 p-4 border-b">
             <BookCover 

@@ -4,13 +4,13 @@
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "../ui/button";
 import { BookCover } from "./book-cover";
-import type { Book, BookWithListContext } from "@/lib/types";
+import type { Book, BookWithListContext, BookSearchResult } from "@/lib/types";
 import { Star, FileText, Globe, Building } from 'lucide-react';
 import Link from "next/link";
 import { Separator } from "../ui/separator";
 
 
-export function BookDetailsDialog({ book, children }: { book: Book | BookWithListContext, children: React.ReactNode }) {
+export function BookDetailsDialog({ book, children }: { book: Book | BookWithListContext | BookSearchResult, children: React.ReactNode }) {
     
     const isBookWithContext = 'listId' in book && book.listId !== 'recommendation';
     const hasMetadata = book.averageRating || book.pageCount || book.publisher || book.language;
