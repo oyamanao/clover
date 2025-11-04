@@ -14,7 +14,7 @@ import type { Book, BookWithListContext } from "@/lib/types";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { Card, CardContent, CardHeader } from "../components/ui/card";
 import { Clover, Sparkles } from "lucide-react";
-import { searchBooks } from "@/ai/flows/search-books";
+import { featuredBooks } from "@/lib/placeholder-images";
 
 
 function SectionLoadingSkeleton({ count = 4 }: { count?: number }) {
@@ -58,10 +58,7 @@ export default function HomePage() {
     const { firestore, user, isUserLoading } = useFirebase();
     const router = useRouter();
     const [recentlyViewedIds, setRecentlyViewedIds] = useLocalStorage<string[]>('recentlyViewedBookLists', []);
-    const [featuredBooks, setFeaturedBooks] = useState<Book[]>([]);
-    const [isLoadingFeatured, setIsLoadingFeatured] = useState(true);
-    const [featuredError, setFeaturedError] = useState<string | null>(null);
-
+    
     useEffect(() => {
         if (!isUserLoading && !user) {
             router.push('/welcome');
@@ -93,24 +90,6 @@ export default function HomePage() {
     
     const isLoadingMyLists = isLoadingMyPrivate || isLoadingMyPublic;
     
-     useEffect(() => {
-        const getFeaturedBooks = async () => {
-            setIsLoadingFeatured(true);
-            setFeaturedError(null);
-            try {
-                const results = await searchBooks({ query: "", featured: true });
-                setFeaturedBooks(results.books.map((b, i) => ({ ...b, id: i })));
-            } catch (err) {
-                console.error("Failed to fetch featured books:", err);
-                setFeaturedError("Could not load featured books. Please try again later.");
-            } finally {
-                setIsLoadingFeatured(false);
-            }
-        };
-        getFeaturedBooks();
-    }, []);
-
-
     const recentlyViewedLists = useMemo(() => {
         if (!publicLists || recentlyViewedIds.length === 0) return [];
         
@@ -152,15 +131,12 @@ export default function HomePage() {
                             </Link>
                         </Button>
                     </div>
-                    {isLoadingFeatured ? <BookSectionLoadingSkeleton /> : (
-                        featuredError ? (
-                            <p className="text-muted-foreground">{featuredError}</p>
-                        ) : featuredBooks && featuredBooks.length > 0 ? (
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6">
-                                {featuredBooks.map((book, i) => <BookCard key={i} book={{...book, listId: 'recommendation', listName: 'Recommendation'}} />)}
-                            </div>
-                        ) : <p className="text-muted-foreground">No featured books available right now.</p>
-                    )}
+                    {featuredBooks && featuredBooks.length > 0 ? (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6">
+                            {featuredBooks.map((book, i) => <BookCard key={i} book={{...book, listId: 'recommendation', listName: 'Recommendation'}} />)}
+                        </div>
+                    ) : <p className="text-muted-foreground">No featured books available right now.</p>
+                    }
                 </section>
 
                 {recentlyViewedLists.length > 0 && (

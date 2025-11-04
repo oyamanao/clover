@@ -1,3 +1,40 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "1",
+      "description": "The mystical forest from an ancient tale.",
+      "imageUrl": "https://images.unsplash.com/photo-1523293836414-f04e712e1f3b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxmYW50YXN5JTIwZm9yZXN0fGVufDB8fHx8MTc2MjI0MDg4Mnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "fantasy forest"
+    },
+    {
+      "id": "2",
+      "description": "A futuristic cityscape under a neon sky.",
+      "imageUrl": "https://images.unsplash.com/photo-1707999464758-0ad86b14290f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxjeWJlcnB1bmslMjBjaXR5fGVufDB8fHx8MTc2MjE4NDk3OHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "cyberpunk city"
+    },
+    {
+      "id": "3",
+      "description": "A lone spaceship drifting in the cosmos.",
+      "imageUrl": "https://images.unsplash.com/photo-1741017162002-fac8e37509f9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8c3BhY2UlMjBuZWJ1bGF8ZW58MHx8fHwxNzYyMjA4NDU2fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "space nebula"
+    },
+    {
+      "id": "4",
+      "description": "A quiet library with towering bookshelves.",
+      "imageUrl": "https://images.unsplash.com/photo-1541123039768-be0b59340e7b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxvbGQlMjBsaWJyYXJ5fGVufDB8fHx8MTc2MjI0MDg4Mnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "old library"
+    },
+    {
+      "id": "5",
+      "description": "A detective's desk in a noir setting.",
+      "imageUrl": "https://images.unsplash.com/photo-1712007157716-435b75ff05b6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxkZXRlY3RpdmUlMjBvZmZpY2V8ZW58MHx8fHwxNzYyMTkxNzE2fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "detective office"
+    },
+    {
+      "id": "6",
+      "description": "A romantic walk on a Parisian street.",
+      "imageUrl": "https://images.unsplash.com/photo-1638874085157-91988ffd3fe5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxwYXJpcyUyMHN0cmVldHxlbnwwfHx8fDE3NjIyNDA4ODJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "paris street"
+    }
+  ]
 }
