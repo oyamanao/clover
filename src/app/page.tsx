@@ -1,19 +1,45 @@
 
 'use client';
 
-import { useMemo, useEffect, useState } from "react";
+import { useMemo, useEffect, useState, useCallback } from "react";
 import { useFirebase, useCollection, useMemoFirebase } from "@/firebase";
 import { useRouter }from "next/navigation";
 import { collection, query, where, limit, orderBy } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Loader2, ArrowRight } from "lucide-react";
+import { Loader2, ArrowRight, Sparkles, Clover, RefreshCw } from "lucide-react";
 import { BookListCard } from "@/components/app/book-list-card";
 import { useLocalStorage } from "@/hooks/use-local-storage";
-import { Card, CardContent, CardHeader } from "../components/ui/card";
-import { Clover, Sparkles } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import { BookCard } from "@/components/app/book-card";
-import type { BookWithListContext } from "@/lib/types";
+import type { Book, BookWithListContext } from "@/lib/types";
+import { summarizeLibrary } from "@/ai/flows/summarize-library";
+import { generateBookRecommendations } from "@/ai/flows/generate-book-recommendations";
+import { useToast } from "@/hooks/use-toast";
+
+
+type CachedRecommendations = {
+  timestamp: number;
+  books: Book[];
+};
+
+function parseGptBook(bookString: string): Omit<Book, 'id'> | null {
+  const titleMatch = bookString.match(/\*\*Title:\*\*\s*(.*)/);
+  const authorMatch = bookString.match(/\*\*Author:\*\*\s*(.*)/);
+  const reasonMatch = bookString.match(/\*\*Reason:\*\*\s*(.*)/);
+
+  if (!titleMatch || !authorMatch || !reasonMatch) {
+    return null;
+  }
+
+  return {
+    title: titleMatch[1].trim(),
+    author: authorMatch[1].trim(),
+    description: reasonMatch[1].trim(),
+    imageUrl: `https://picsum.photos/seed/${encodeURIComponent(titleMatch[1].trim())}/600/800`,
+    // Other book properties would be populated via a proper book API
+  };
+}
 
 
 function SectionLoadingSkeleton({ count = 4 }: { count?: number }) {
@@ -21,7 +47,7 @@ function SectionLoadingSkeleton({ count = 4 }: { count?: number }) {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {[...Array(count)].map((_, i) => (
                 <Card key={i} className="animate-pulse">
-                    <div className="aspect-[2/3] w-full bg-muted-foreground/20 rounded-t-lg"></div>
+                    <div className="aspect-square w-full bg-muted-foreground/20 rounded-t-lg"></div>
                     <CardHeader className="p-4">
                         <div className="h-5 w-3/4 rounded bg-muted-foreground/20"></div>
                         <div className="h-4 w-1/2 rounded bg-muted-foreground/20 mt-2"></div>
@@ -35,7 +61,10 @@ function SectionLoadingSkeleton({ count = 4 }: { count?: number }) {
 export default function HomePage() {
     const { firestore, user, isUserLoading } = useFirebase();
     const router = useRouter();
-    const [recentlyViewedIds] = useLocalStorage<string[]>('recentlyViewedBookLists', []);
+    const { toast } = useToast();
+    
+    const [recommendations, setRecommendations] = useLocalStorage<CachedRecommendations | null>('homepage-recommendations', null);
+    const [isGeneratingRecs, setIsGeneratingRecs] = useState(false);
     
     useEffect(() => {
         if (!isUserLoading && !user) {
@@ -68,33 +97,93 @@ export default function HomePage() {
     
     const isLoadingMyLists = isLoadingMyPrivate || isLoadingMyPublic;
     
-    const featuredBooks: BookWithListContext[] = useMemo(() => {
-        if (!publicLists) return [];
+    const allMyBooks = useMemo(() => {
+        const bookSet = new Set<string>();
+        myLists.forEach(list => {
+            list.books?.forEach((book: Book) => {
+                bookSet.add(`${book.title.toLowerCase()}|${book.author.toLowerCase()}`);
+            });
+        });
+        return bookSet;
+    }, [myLists]);
 
-        const bookMap = new Map<string, BookWithListContext>();
 
-        const addBooksFromList = (list: any) => {
-            if (!list?.books) return;
-            for (const book of list.books) {
-                const uniqueKey = `${book.title}-${book.author}`;
-                if (!bookMap.has(uniqueKey)) {
-                    bookMap.set(uniqueKey, { ...book, listId: list.id, listName: list.name });
-                }
-            }
-        };
-
-        // Prioritize recently viewed lists
-        const recentlyViewedLists = recentlyViewedIds
-            .map(id => publicLists.find(list => list.id === id))
-            .filter(Boolean);
-
-        recentlyViewedLists.forEach(addBooksFromList);
+    const getNewRecommendations = useCallback(async (force = false) => {
+        if (!user || !myLists || myLists.length === 0) return;
         
-        // Then add from the latest public lists
-        publicLists.forEach(addBooksFromList);
+        const now = Date.now();
+        const oneHour = 60 * 60 * 1000;
 
-        return Array.from(bookMap.values()).slice(0, 8); // Take up to 8 unique books
-    }, [publicLists, recentlyViewedIds]);
+        if (!force && recommendations && (now - recommendations.timestamp < oneHour)) {
+            // Cache is fresh, do nothing
+            return;
+        }
+
+        setIsGeneratingRecs(true);
+
+        try {
+            const libraryContent = myLists
+                .flatMap(list => list.books || [])
+                .map((book: Book) => `${book.title} by ${book.author}`)
+                .join('\n');
+            
+            if (!libraryContent.trim()) {
+                setIsGeneratingRecs(false);
+                return;
+            }
+
+            const prefs = await summarizeLibrary({ books: libraryContent });
+            if (!prefs.summary) {
+                 setIsGeneratingRecs(false);
+                 return;
+            }
+
+            const recsResult = await generateBookRecommendations({ preferences: prefs.summary });
+
+            const newBooks = recsResult.recommendations
+                .split(/\n\s*\n/)
+                .map(parseGptBook)
+                .filter((book): book is Book => {
+                    if (!book) return false;
+                    const bookKey = `${book.title.toLowerCase()}|${book.author.toLowerCase()}`;
+                    return !allMyBooks.has(bookKey);
+                });
+            
+            setRecommendations({
+                timestamp: Date.now(),
+                books: newBooks.slice(0, 4) // Cache up to 4 recommendations
+            });
+
+             if (force) {
+                toast({
+                    title: "Recommendations Refreshed",
+                    description: "We've found some new books for you.",
+                });
+            }
+
+        } catch (error) {
+            console.error("Failed to generate recommendations:", error);
+            if (force) {
+                toast({
+                    variant: "destructive",
+                    title: "Could not refresh recommendations",
+                    description: "The recommendation service might be temporarily unavailable.",
+                });
+            }
+             // Clear cache on error to allow retrying
+            setRecommendations(null);
+        } finally {
+            setIsGeneratingRecs(false);
+        }
+
+    }, [user, myLists, allMyBooks, recommendations, setRecommendations, toast]);
+
+    useEffect(() => {
+        // Fetch recommendations on initial load if cache is stale
+        if (user && myLists.length > 0) {
+            getNewRecommendations(false);
+        }
+    }, [user, myLists, getNewRecommendations]);
     
     if (isUserLoading || !user) {
         return (
@@ -117,23 +206,34 @@ export default function HomePage() {
                 <section>
                     <div className="flex justify-between items-center mb-6">
                         <h2 className="text-2xl md:text-3xl font-headline flex items-center gap-2">
-                           <Sparkles /> Featured Books
+                           <Sparkles /> Recommended For You
                         </h2>
-                         <Button variant="link" asChild>
-                            <Link href="/recommendations">
-                                Get AI Recommendations <ArrowRight className="ml-2"/>
-                            </Link>
-                        </Button>
+                         <div className="flex items-center gap-2">
+                             <Button variant="ghost" size="icon" onClick={() => getNewRecommendations(true)} disabled={isGeneratingRecs}>
+                                {isGeneratingRecs ? <Loader2 className="animate-spin" /> : <RefreshCw />}
+                                <span className="sr-only">Refresh Recommendations</span>
+                             </Button>
+                             <Button variant="link" asChild>
+                                <Link href="/recommendations">
+                                    Get More <ArrowRight className="ml-2 hidden sm:inline"/>
+                                </Link>
+                            </Button>
+                         </div>
                     </div>
-                    {isLoadingPublic ? (
-                        <SectionLoadingSkeleton count={8} />
-                    ) : featuredBooks && featuredBooks.length > 0 ? (
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-                           {featuredBooks.map(book => <BookCard key={`${book.listId}-${book.title}`} book={book} />)}
+                    {isGeneratingRecs && !recommendations?.books ? (
+                        <SectionLoadingSkeleton count={4} />
+                    ) : recommendations && recommendations.books.length > 0 ? (
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                           {recommendations.books.map(book => <BookCard key={book.title} book={{...book, listId: "recommendation"}} />)}
                         </div>
-                    ) : (
-                        <p className="text-muted-foreground">No featured books available right now.</p>
-                    )}
+                    ) : !isGeneratingRecs ? (
+                        <div className="text-center py-12 md:py-16 border-2 border-dashed rounded-lg">
+                            <p className="text-muted-foreground">Add books to your lists to get personalized recommendations.</p>
+                            <Button variant="link" asChild className="mt-2">
+                                <Link href="/book-lists/new">Start a new list</Link>
+                            </Button>
+                        </div>
+                    ) : null}
                 </section>
 
                 {myLists.length > 0 && (
@@ -151,18 +251,9 @@ export default function HomePage() {
                         )}
                     </section>
                 )}
-
-                {!isLoadingMyLists && myLists.length === 0 && (
-                    <section>
-                         <div className="text-center py-12 md:py-16 border-2 border-dashed rounded-lg">
-                            <p className="text-muted-foreground">You haven't created any book lists yet.</p>
-                            <Button variant="link" asChild className="mt-2">
-                                <Link href="/book-lists/new">Create one now</Link>
-                            </Button>
-                        </div>
-                    </section>
-                )}
             </main>
         </div>
     );
 }
+
+    
