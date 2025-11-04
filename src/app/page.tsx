@@ -99,17 +99,17 @@ export default function HomePage() {
     
     const allMyBooks = useMemo(() => {
         const bookSet = new Set<string>();
-        myLists.forEach(list => {
+        [...(myPrivateLists || []), ...(myPublicLists || [])].forEach(list => {
             list.books?.forEach((book: Book) => {
-                bookSet.add(`${book.title.toLowerCase()}|${book.author.toLowerCase()}`);
+                bookSet.add(`${book.title.toLowerCase().trim()}|${book.author.toLowerCase().trim()}`);
             });
         });
         return bookSet;
-    }, [myLists]);
+    }, [myPrivateLists, myPublicLists]);
 
 
     const getNewRecommendations = useCallback(async (force = false) => {
-        if (!user || !myLists || myLists.length === 0) return;
+        if (!user || (!myPrivateLists && !myPublicLists)) return;
         
         const now = Date.now();
         const oneHour = 60 * 60 * 1000;
@@ -120,21 +120,24 @@ export default function HomePage() {
         }
 
         setIsGeneratingRecs(true);
+        const allLists = [...(myPrivateLists || []), ...(myPublicLists || [])];
 
         try {
-            const libraryContent = myLists
+            const libraryContent = allLists
                 .flatMap(list => list.books || [])
                 .map((book: Book) => `${book.title} by ${book.author}`)
                 .join('\n');
             
             if (!libraryContent.trim()) {
                 setIsGeneratingRecs(false);
+                setRecommendations(null); // Clear recommendations if library is empty
                 return;
             }
 
             const prefs = await summarizeLibrary({ books: libraryContent });
             if (!prefs.summary) {
                  setIsGeneratingRecs(false);
+                 setRecommendations(null);
                  return;
             }
 
@@ -143,11 +146,7 @@ export default function HomePage() {
             const newBooks = recsResult.recommendations
                 .split(/\n\s*\n/)
                 .map(parseGptBook)
-                .filter((book): book is Book => {
-                    if (!book) return false;
-                    const bookKey = `${book.title.toLowerCase()}|${book.author.toLowerCase()}`;
-                    return !allMyBooks.has(bookKey);
-                });
+                .filter((book): book is Book => !!book);
             
             setRecommendations({
                 timestamp: Date.now(),
@@ -176,14 +175,23 @@ export default function HomePage() {
             setIsGeneratingRecs(false);
         }
 
-    }, [user, myLists, allMyBooks, recommendations, setRecommendations, toast]);
+    }, [user, myPrivateLists, myPublicLists, recommendations, setRecommendations, toast]);
 
     useEffect(() => {
-        // Fetch recommendations on initial load if cache is stale
-        if (user && myLists.length > 0) {
+        // Fetch recommendations on initial load if cache is stale or lists are loaded
+        const listsLoaded = !isLoadingMyPrivate && !isLoadingMyPublic;
+        if (user && listsLoaded) {
             getNewRecommendations(false);
         }
-    }, [user, myLists, getNewRecommendations]);
+    }, [user, isLoadingMyPrivate, isLoadingMyPublic, getNewRecommendations]);
+
+    const filteredRecommendations = useMemo(() => {
+        if (!recommendations?.books) return [];
+        return recommendations.books.filter(book => {
+            const bookKey = `${book.title.toLowerCase().trim()}|${book.author.toLowerCase().trim()}`;
+            return !allMyBooks.has(bookKey);
+        });
+    }, [recommendations, allMyBooks]);
     
     if (isUserLoading || !user) {
         return (
@@ -220,11 +228,11 @@ export default function HomePage() {
                             </Button>
                          </div>
                     </div>
-                    {isGeneratingRecs && !recommendations?.books ? (
+                    {isGeneratingRecs && !filteredRecommendations.length ? (
                         <SectionLoadingSkeleton count={4} />
-                    ) : recommendations && recommendations.books.length > 0 ? (
+                    ) : filteredRecommendations.length > 0 ? (
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-                           {recommendations.books.map(book => <BookCard key={book.title} book={{...book, listId: "recommendation"}} />)}
+                           {filteredRecommendations.map(book => <BookCard key={book.title} book={{...book, listId: "recommendation"}} />)}
                         </div>
                     ) : !isGeneratingRecs ? (
                         <div className="text-center py-12 md:py-16 border-2 border-dashed rounded-lg">
