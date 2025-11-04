@@ -10,7 +10,7 @@ import Link from "next/link";
 import { Loader2, ArrowRight, Sparkles, Clover, RefreshCw } from "lucide-react";
 import { BookListCard } from "@/components/app/book-list-card";
 import { useLocalStorage } from "@/hooks/use-local-storage";
-import { Card } from "@/components/ui/card";
+import { Card, CardHeader } from "@/components/ui/card";
 import { BookCard } from "@/components/app/book-card";
 import type { Book, BookWithListContext } from "@/lib/types";
 import { summarizeLibrary } from "@/ai/flows/summarize-library";
