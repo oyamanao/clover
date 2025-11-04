@@ -62,6 +62,7 @@ export default function HomePage() {
     const [recentlyViewedIds, setRecentlyViewedIds] = useLocalStorage<string[]>('recentlyViewedBookLists', []);
     const [recommendedBooks, setRecommendedBooks] = useState<Book[]>([]);
     const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(true);
+    const [recommendationError, setRecommendationError] = useState<string | null>(null);
 
     useEffect(() => {
         if (!isUserLoading && !user) {
@@ -98,34 +99,40 @@ export default function HomePage() {
         const getRecommendations = async () => {
             if (isLoadingMyLists || !user) return;
             setIsLoadingRecommendations(true);
+            setRecommendationError(null);
             
-            const allMyBooks = (myPrivateLists || []).concat(myPublicLists || []).flatMap(list => list.books || []);
+            try {
+                const allMyBooks = (myPrivateLists || []).concat(myPublicLists || []).flatMap(list => list.books || []);
 
-            if (allMyBooks.length > 0) {
-                 const libraryContent = allMyBooks.map(b => `${b.title} by ${b.author}`).join('\n');
-                 const prefs = await summarizeLibrary({ books: libraryContent });
-                 const preferencesText = `Genres: ${prefs.genres.join(', ')}. Themes: ${prefs.themes.join(', ')}. Summary: ${prefs.summary}`;
+                if (allMyBooks.length > 0) {
+                    const libraryContent = allMyBooks.map(b => `${b.title} by ${b.author}`).join('\n');
+                    const prefs = await summarizeLibrary({ books: libraryContent });
+                    const preferencesText = `Genres: ${prefs.genres.join(', ')}. Themes: ${prefs.themes.join(', ')}. Summary: ${prefs.summary}`;
 
-                 const recommendationsResult = await generateBookRecommendations({ preferences: preferencesText });
+                    const recommendationsResult = await generateBookRecommendations({ preferences: preferencesText });
 
-                // The output is a single string, we need to parse it and get full book details
-                const parsedTitles = recommendationsResult.recommendations.split('\n\n')
-                    .map(rec => rec.match(/\*\*Title:\*\*\s*(.*)/)?.[1].trim())
-                    .filter(Boolean);
+                    const parsedTitles = recommendationsResult.recommendations.split('\n\n')
+                        .map(rec => rec.match(/\*\*Title:\*\*\s*(.*)/)?.[1].trim())
+                        .filter(Boolean) as string[];
 
-                if (parsedTitles.length > 0) {
-                     const searchPromises = parsedTitles.map(title => searchBooks({ query: `title:"${title}"` }));
-                     const searchResults = await Promise.all(searchPromises);
-                     const booksWithDetails = searchResults.map(res => res.books?.[0]).filter(Boolean);
-                     setRecommendedBooks(booksWithDetails.map((b, i) => ({...b, id: i})));
+                    if (parsedTitles.length > 0) {
+                        const searchPromises = parsedTitles.map(title => searchBooks({ query: `title:"${title}"` }));
+                        const searchResults = await Promise.all(searchPromises);
+                        const booksWithDetails = searchResults.map(res => res.books?.[0]).filter(Boolean);
+                        setRecommendedBooks(booksWithDetails.map((b, i) => ({...b, id: i})));
+                    } else {
+                        setRecommendedBooks([]);
+                    }
                 } else {
                     setRecommendedBooks([]);
                 }
-
-            } else {
+            } catch (error) {
+                console.error("Failed to get recommendations:", error);
+                setRecommendationError("The recommendation service is temporarily unavailable. Please try again later.");
                 setRecommendedBooks([]);
+            } finally {
+                setIsLoadingRecommendations(false);
             }
-            setIsLoadingRecommendations(false);
         };
 
         getRecommendations();
@@ -177,7 +184,9 @@ export default function HomePage() {
                         </Button>
                     </div>
                     {isLoadingRecommendations ? <BookSectionLoadingSkeleton /> : (
-                         recommendedBooks && recommendedBooks.length > 0 ? (
+                        recommendationError ? (
+                            <p className="text-muted-foreground">{recommendationError}</p>
+                        ) : recommendedBooks && recommendedBooks.length > 0 ? (
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6">
                                 {recommendedBooks.map((book, i) => <BookCard key={i} book={{...book, listId: 'recommendation', listName: 'Recommendation'}} />)}
                             </div>
