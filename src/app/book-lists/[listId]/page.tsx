@@ -8,7 +8,7 @@ import { useDoc } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Heart, Share2, Edit, User as UserIcon, Book, Copy } from 'lucide-react';
+import { Loader2, Heart, Share2, Edit, User as UserIcon, Book, Copy, Star, FileText, Globe, Building } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
 import { BookCover } from '@/components/app/book-cover';
@@ -33,6 +33,12 @@ function BookInList({ book }: { book: any }) {
             <div className="flex-grow">
                 <h3 className="text-lg font-semibold font-headline">{book.title}</h3>
                 <p className="text-sm text-muted-foreground">by {book.author}</p>
+                <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2 flex-wrap">
+                    {book.averageRating > 0 && <div className="flex items-center gap-1"><Star className="size-3" /> {book.averageRating.toFixed(1)}</div>}
+                    {book.pageCount > 0 && <div className="flex items-center gap-1"><FileText className="size-3" /> {book.pageCount} pages</div>}
+                    {book.publisher && <div className="flex items-center gap-1"><Building className="size-3" /> {book.publisher}</div>}
+                    {book.language && <div className="flex items-center gap-1"><Globe className="size-3" /> {book.language.toUpperCase()}</div>}
+                </div>
                 <p className="mt-2 text-sm text-foreground/80 line-clamp-3">{book.description}</p>
             </div>
         </div>

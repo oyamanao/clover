@@ -130,6 +130,22 @@
         "imageUrl": {
           "type": "string",
           "description": "URL for the book cover image."
+        },
+        "averageRating": {
+          "type": "number",
+          "description": "The average rating of the book."
+        },
+        "pageCount": {
+          "type": "number",
+          "description": "The number of pages in the book."
+        },
+        "publisher": {
+          "type": "string",
+          "description": "The publisher of the book."
+        },
+        "language": {
+          "type": "string",
+          "description": "The language code of the book (e.g., 'en', 'es')."
         }
       },
       "required": [

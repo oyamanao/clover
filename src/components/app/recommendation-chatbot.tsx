@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Bot, User, BookHeart } from "lucide-react";
-import type { ChatMessage } from "@/lib/types";
+import { Send, Bot, User, BookHeart, Star, FileText, Globe, Building } from "lucide-react";
+import type { ChatMessage, BookSearchResult } from "@/lib/types";
 import {
   Card,
   CardContent,
@@ -17,39 +17,33 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
-interface RecommendationChatbotProps {
-  chatHistory: ChatMessage[];
-  onSendMessage: (message: string) => void;
-  isLoading: boolean;
-  isReady: boolean;
-}
-
 function RecommendationItem({ recommendation }: { recommendation: string }) {
-    // Naively parse title, author, and reason
+    // Naively parse fields
     const titleMatch = recommendation.match(/\*\*Title:\*\*\s*(.*)/);
     const authorMatch = recommendation.match(/\*\*Author:\*\*\s*(.*)/);
     const reasonMatch = recommendation.match(/\*\*Reason:\*\*\s*([\s\S]*)/);
 
+    // This is a temporary fix to handle parsing of new fields from the string.
+    // A better solution would be to have the AI return structured JSON for recommendations.
+    const book: Partial<BookSearchResult> = {
+      title: titleMatch ? titleMatch[1].trim() : 'Unknown Title',
+      author: authorMatch ? authorMatch[1].trim() : 'Unknown Author',
+    };
+
     if (!titleMatch) {
-      // If the format doesn't match, render it as plain text. 
-      // This can happen if the AI gives a conversational follow-up.
       return null;
     }
-
-    const title = titleMatch ? titleMatch[1].trim() : 'Unknown Title';
-    const author = authorMatch ? authorMatch[1].trim() : 'Unknown Author';
-    const reason = reasonMatch ? reasonMatch[1].trim() : recommendation;
 
   return (
     <Card className="mt-3 bg-card/80 backdrop-blur-sm border-accent/20">
       <CardHeader className="p-4">
         <CardTitle className="text-base font-headline flex items-center gap-2">
-          <BookHeart className="text-accent" /> {title}
+          <BookHeart className="text-accent" /> {book.title}
         </CardTitle>
-        <CardDescription className="text-xs !mt-1">by {author}</CardDescription>
+        <CardDescription className="text-xs !mt-1">by {book.author}</CardDescription>
       </CardHeader>
       <CardContent className="p-4 pt-0">
-        <p className="text-sm whitespace-pre-wrap font-body text-foreground/80">{reason.replace(/^Reason:\s*/, '')}</p>
+        <p className="text-sm whitespace-pre-wrap font-body text-foreground/80">{reasonMatch ? reasonMatch[1].trim() : recommendation}</p>
       </CardContent>
     </Card>
   );
