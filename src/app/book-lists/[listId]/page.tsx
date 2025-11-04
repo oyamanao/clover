@@ -95,6 +95,13 @@ export default function BookListPage({ params: paramsPromise }: { params: Promis
                         } else {
                             setFinalListData(null); // It might have been deleted
                         }
+                    }, (err) => {
+                        console.error("Snapshot error on public list:", err);
+                        const permissionError = new FirestorePermissionError({
+                            path: publicListRef.path,
+                            operation: 'list',
+                        });
+                        errorEmitter.emit('permission-error', permissionError);
                     });
 
                 } else {
@@ -115,6 +122,13 @@ export default function BookListPage({ params: paramsPromise }: { params: Promis
                                } else {
                                    setFinalListData(null);
                                }
+                           }, (err) => {
+                                console.error("Snapshot error on private list:", err);
+                                const permissionError = new FirestorePermissionError({
+                                    path: privateListRef.path,
+                                    operation: 'list',
+                                });
+                                errorEmitter.emit('permission-error', permissionError);
                            });
                         }
                     }

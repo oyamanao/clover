@@ -29,8 +29,8 @@ export interface BookSearchResult {
   author: string;
   description: string;
   imageUrl: string;
-  averageRating?: number;
-  pageCount?: number;
-  publisher?: string;
-  language?: string;
+  averageRating: number;
+  pageCount: number;
+  publisher: string;
+  language: string;
 }
