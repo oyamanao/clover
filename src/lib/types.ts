@@ -2,7 +2,7 @@
 
 export interface Book {
   id?: number; // Optional because search results might not have it
-  title: string;
+  title: string;//some comments
   author: string;
   description: string;
   imageUrl: string;
