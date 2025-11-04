@@ -20,11 +20,23 @@ const RefineRecommendationsViaChatbotInputSchema = z.object({
 });
 export type RefineRecommendationsViaChatbotInput = z.infer<typeof RefineRecommendationsViaChatbotInputSchema>;
 
+const RecommendedBookSchema = z.object({
+  title: z.string().describe('The title of the book.'),
+  author: z.string().describe('The author of the book.'),
+  description: z.string().describe('A brief, compelling reason why this book is a good match for the user\'s preferences.'),
+  imageUrl: z.string().url().describe('A URL for the book cover image.'),
+  averageRating: z.number().describe('The average rating of the book (out of 5).'),
+  pageCount: z.number().describe('The number of pages in the book.'),
+  publisher: z.string().describe('The publisher of the book.'),
+  language: z.string().describe('The two-letter language code for the book (e.g., "en").'),
+});
+
 const RefineRecommendationsViaChatbotOutputSchema = z.object({
-  refinedRecommendations: z.string().optional().describe('Updated list of book recommendations based on the conversation. Only include this if the user asks for new or different recommendations.'),
+  refinedRecommendations: z.array(RecommendedBookSchema).optional().describe('Updated list of book recommendations based on the conversation. Only include this if the user asks for new or different recommendations.'),
   chatbotResponse: z.string().describe('The chatbot\'s conversational response to the user. This should be friendly and helpful.'),
 });
 export type RefineRecommendationsViaChatbotOutput = z.infer<typeof RefineRecommendationsViaChatbotOutputSchema>;
+
 
 export async function refineRecommendationsViaChatbot(input: RefineRecommendationsViaChatbotInput): Promise<RefineRecommendationsViaChatbotOutput> {
   return refineRecommendationsViaChatbotFlow(input);
@@ -46,11 +58,11 @@ The user has just said: "{{{userInput}}}"
 
 Your task is to provide a helpful, conversational response. Analyze the user's input and the chat history to understand their intent.
 
-- If the user is asking for different recommendations, asking to refine them, or expressing dissatisfaction, generate a new list of recommendations.
+- If the user is asking for different recommendations, asking to refine them, or expressing dissatisfaction, generate a new list of recommendations and provide a conversational response.
 - If the user is asking a question about a specific book, or a general question, answer it to the best of your ability without generating new recommendations.
 - If the user is just chatting, respond conversationally.
 
-Keep your response concise and friendly. If you generate new recommendations, present them clearly. If not, just provide the chat response.`,
+Keep your response concise and friendly. If you generate new recommendations, present them clearly in the structured format required. If not, just provide the chat response.`,
 });
 
 const refineRecommendationsViaChatbotFlow = ai.defineFlow(

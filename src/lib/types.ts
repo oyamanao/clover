@@ -1,4 +1,5 @@
 
+
 export interface Book {
   id?: number; // Optional because search results might not have it
   title: string;
@@ -20,7 +21,7 @@ export interface ChatMessage {
   id: number;
   role: "user" | "assistant";
   content: string;
-  recommendations?: string;
+  recommendations?: BookSearchResult[];
 }
 
 export interface BookSearchResult {

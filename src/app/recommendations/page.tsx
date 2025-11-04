@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { Book, ChatMessage } from "@/lib/types";
+import type { Book, ChatMessage, BookSearchResult } from "@/lib/types";
 import { BookLibrary } from "@/components/app/book-library";
 import { PreferenceTool } from "@/components/app/preference-tool";
 import { RecommendationChatbot } from "@/components/app/recommendation-chatbot";
@@ -25,7 +25,7 @@ export default function RecommendationsPage() {
   const [books, setBooks] = useState<Book[]>([]);
   const [userPreferences, setUserPreferences] = useState("");
   const [summarizedPreferences, setSummarizedPreferences] = useState<SummarizeLibraryOutput | null>(null);
-  const [initialRecommendations, setInitialRecommendations] = useState("");
+  const [initialRecommendations, setInitialRecommendations] = useState<BookSearchResult[]>([]);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isChatting, setIsChatting] = useState(false);
@@ -139,7 +139,7 @@ export default function RecommendationsPage() {
     setBooks([]);
     setSummarizedPreferences(null);
     setUserPreferences("");
-    setInitialRecommendations("");
+    setInitialRecommendations([]);
     setChatHistory([]);
     toast({
       title: "Library Cleared",
@@ -153,7 +153,7 @@ export default function RecommendationsPage() {
     const finalPreferences = [summarizedPreferences?.summary, preferences].filter(Boolean).join('\n\n');
 
     setIsGenerating(true);
-    setInitialRecommendations("");
+    setInitialRecommendations([]);
     setChatHistory([]);
 
     try {
@@ -203,7 +203,7 @@ export default function RecommendationsPage() {
       const fullPreferences = [summarizedPreferences?.summary, userPreferences].filter(Boolean).join('\n\n');
       
       const lastAssistantMessage = chatHistory.filter(m => m.role === 'assistant').pop();
-      const currentRecommendations = lastAssistantMessage?.recommendations || initialRecommendations;
+      const currentRecommendations = lastAssistantMessage?.recommendations?.map(r => r.title).join(', ') || initialRecommendations.map(r => r.title).join(', ');
 
 
       const result = await refineRecommendationsViaChatbot({

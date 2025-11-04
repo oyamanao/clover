@@ -23,10 +23,21 @@ const GenerateBookRecommendationsInputSchema = z.object({
 });
 export type GenerateBookRecommendationsInput = z.infer<typeof GenerateBookRecommendationsInputSchema>;
 
+const RecommendedBookSchema = z.object({
+  title: z.string().describe('The title of the book.'),
+  author: z.string().describe('The author of the book.'),
+  description: z.string().describe('A brief, compelling reason why this book is a good match for the user\'s preferences.'),
+  imageUrl: z.string().url().describe('A URL for the book cover image.'),
+  averageRating: z.number().describe('The average rating of the book (out of 5).'),
+  pageCount: z.number().describe('The number of pages in the book.'),
+  publisher: z.string().describe('The publisher of the book.'),
+  language: z.string().describe('The two-letter language code for the book (e.g., "en").'),
+});
+
 const GenerateBookRecommendationsOutputSchema = z.object({
   recommendations: z
-    .string()
-    .describe('A list of 3-5 book recommendations based on the user’s preferences. For each recommendation, provide a title, author, and a reason for the recommendation. Separate each recommendation with a newline.'),
+    .array(RecommendedBookSchema)
+    .describe('A list of 3-5 book recommendations based on the user’s preferences.'),
 });
 export type GenerateBookRecommendationsOutput = z.infer<typeof GenerateBookRecommendationsOutputSchema>;
 
@@ -42,12 +53,7 @@ const prompt = ai.definePrompt({
   output: {schema: GenerateBookRecommendationsOutputSchema},
   prompt: `You are a book recommendation expert. A user will provide their reading preferences and you will give them a list of 3-5 books that they might enjoy. 
 
-For each book, provide the following details formatted exactly like this:
-**Title:** [Book Title]
-**Author:** [Author Name]
-**Reason:** [Explain why this book is a good match based on the user's preferences]
-
-Separate each book recommendation with two newlines.
+For each book, you MUST provide all the required fields in the output schema. Only return real books.
 
 User Preferences: {{{preferences}}}
 `,

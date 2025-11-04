@@ -19,25 +19,14 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { BookDetailsDialog } from "./book-details-dialog";
 
-function RecommendationItem({ recommendation }: { recommendation: string }) {
-    // Naively parse fields
-    const titleMatch = recommendation.match(/\*\*Title:\*\*\s*(.*)/);
-    const authorMatch = recommendation.match(/\*\*Author:\*\*\s*(.*)/);
-    const reasonMatch = recommendation.match(/\*\*Reason:\*\*\s*([\s\S]*)/);
+interface RecommendationChatbotProps {
+  chatHistory: ChatMessage[];
+  onSendMessage: (userInput: string) => void;
+  isLoading: boolean;
+  isReady: boolean;
+}
 
-    // This is a temporary fix to handle parsing of new fields from the string.
-    // A better solution would be to have the AI return structured JSON for recommendations.
-    const book: Partial<BookSearchResult> = {
-      title: titleMatch ? titleMatch[1].trim() : 'Unknown Title',
-      author: authorMatch ? authorMatch[1].trim() : 'Unknown Author',
-      description: reasonMatch ? reasonMatch[1].trim() : recommendation,
-      imageUrl: '', // No image available in this context
-    };
-
-    if (!titleMatch) {
-      return null;
-    }
-
+function RecommendationItem({ book }: { book: BookSearchResult }) {
   return (
     <Card className="mt-3 bg-card/80 backdrop-blur-sm border-accent/20">
       <CardHeader className="p-4">
@@ -49,7 +38,7 @@ function RecommendationItem({ recommendation }: { recommendation: string }) {
         <CardDescription className="text-xs !mt-1">by {book.author}</CardDescription>
       </CardHeader>
       <CardContent className="p-4 pt-0">
-        <p className="text-sm whitespace-pre-wrap font-body text-foreground/80">{reasonMatch ? reasonMatch[1].trim() : recommendation}</p>
+        <p className="text-sm whitespace-pre-wrap font-body text-foreground/80">{book.description}</p>
       </CardContent>
     </Card>
   );
@@ -125,8 +114,8 @@ export function RecommendationChatbot({
                   </p>
                   {message.recommendations && (
                      <div className="mt-4 space-y-3">
-                      {message.recommendations.split(/\n\s*\n/).filter(rec => rec.trim()).map((rec, index) => (
-                        <RecommendationItem key={index} recommendation={rec} />
+                      {message.recommendations.map((rec, index) => (
+                        <RecommendationItem key={index} book={rec} />
                       ))}
                     </div>
                   )}

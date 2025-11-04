@@ -12,7 +12,7 @@ import { BookListCard } from "@/components/app/book-list-card";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { Card, CardHeader } from "@/components/ui/card";
 import { BookCard } from "@/components/app/book-card";
-import type { Book, BookWithListContext } from "@/lib/types";
+import type { Book, BookWithListContext, BookSearchResult } from "@/lib/types";
 import { summarizeLibrary } from "@/ai/flows/summarize-library";
 import { generateBookRecommendations } from "@/ai/flows/generate-book-recommendations";
 import { useToast } from "@/hooks/use-toast";
@@ -20,26 +20,8 @@ import { useToast } from "@/hooks/use-toast";
 
 type CachedRecommendations = {
   timestamp: number;
-  books: Book[];
+  books: BookSearchResult[];
 };
-
-function parseGptBook(bookString: string): Omit<Book, 'id'> | null {
-  const titleMatch = bookString.match(/\*\*Title:\*\*\s*(.*)/);
-  const authorMatch = bookString.match(/\*\*Author:\*\*\s*(.*)/);
-  const reasonMatch = bookString.match(/\*\*Reason:\*\*\s*(.*)/);
-
-  if (!titleMatch || !authorMatch || !reasonMatch) {
-    return null;
-  }
-
-  return {
-    title: titleMatch[1].trim(),
-    author: authorMatch[1].trim(),
-    description: reasonMatch[1].trim(),
-    imageUrl: `https://picsum.photos/seed/${encodeURIComponent(titleMatch[1].trim())}/600/800`,
-    // Other book properties would be populated via a proper book API
-  };
-}
 
 
 function SectionLoadingSkeleton({ count = 4 }: { count?: number }) {
@@ -143,10 +125,7 @@ export default function HomePage() {
 
             const recsResult = await generateBookRecommendations({ preferences: prefs.summary });
 
-            const newBooks = recsResult.recommendations
-                .split(/\n\s*\n/)
-                .map(parseGptBook)
-                .filter((book): book is Book => !!book);
+            const newBooks = recsResult.recommendations;
             
             setRecommendations({
                 timestamp: Date.now(),
@@ -263,5 +242,3 @@ export default function HomePage() {
         </div>
     );
 }
-
-    
