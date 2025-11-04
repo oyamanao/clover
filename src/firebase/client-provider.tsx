@@ -3,7 +3,6 @@
 
 import React, { useState, useEffect, type ReactNode } from 'react';
 import { FirebaseProvider } from '@/firebase/provider';
-import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
 import { getFirestore, type Firestore } from 'firebase/firestore';
@@ -22,6 +21,15 @@ function getSdks(firebaseApp: FirebaseApp) {
 }
 
 function initializeFirebase() {
+  const firebaseConfig = {
+    projectId: "studio-5785792637-546f1",
+    appId: "1:1041815318927:web:eeffa24a495a821738dbfa",
+    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+    authDomain: "studio-5785792637-546f1.firebaseapp.com",
+    measurementId: "",
+    messagingSenderId: "1041815318927"
+  };
+
   if (getApps().length) {
     return getSdks(getApp());
   }
