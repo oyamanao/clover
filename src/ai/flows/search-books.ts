@@ -12,10 +12,11 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
+import { z } from 'zod';
 
 const SearchBooksInputSchema = z.object({
   query: z.string().describe('The user’s search query for books.'),
+  featured: z.boolean().optional().describe('If true, return a variety of featured or popular books instead of using the query.')
 });
 export type SearchBooksInput = z.infer<typeof SearchBooksInputSchema>;
 
@@ -33,7 +34,7 @@ const BookSearchResultSchema = z.object({
 const SearchBooksOutputSchema = z.object({
   books: z
     .array(BookSearchResultSchema)
-    .describe('A list of books that match the search query. Return up to 5 books.'),
+    .describe('A list of books that match the search query. Return up to 6 books.'),
 });
 export type SearchBooksOutput = z.infer<typeof SearchBooksOutputSchema>;
 
@@ -45,11 +46,15 @@ const prompt = ai.definePrompt({
   name: 'searchBooksPrompt',
   input: { schema: SearchBooksInputSchema },
   output: { schema: SearchBooksOutputSchema },
-  prompt: `You are a powerful book search engine. A user will provide a search query, and you will return a list of books that match the query. For each book, provide the title, author, a short (1-2 sentence) description, a book cover image URL, the average rating, page count, publisher, and language code. Only return real books. Prioritize books from a wide range of cultures, including Indian literature.
+  prompt: `You are a powerful book search engine. A user will provide a search query, and you will return a list of books that match the query. For each book, provide the title, author, a short (1-2 sentence) description, a book cover image URL, the average rating, pageCount, publisher, and language code. Only return real books. Prioritize books from a wide range of cultures, including Indian literature.
 
+{{#if featured}}
+Return a list of 6 featured books that are popular or critically acclaimed. They should be from different genres.
+{{else}}
 User Query: {{{query}}}
-
-Respond with a list of up to 5 books in the requested structured format.`,
+Respond with a list of up to 6 books in the requested structured format.
+{{/if}}
+`,
 });
 
 const searchBooksFlow = ai.defineFlow(

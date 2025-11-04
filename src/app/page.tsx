@@ -14,8 +14,6 @@ import type { Book, BookWithListContext } from "@/lib/types";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { Card, CardContent, CardHeader } from "../components/ui/card";
 import { Clover, Sparkles } from "lucide-react";
-import { summarizeLibrary } from "@/ai/flows/summarize-library";
-import { generateBookRecommendations } from "@/ai/flows/generate-book-recommendations";
 import { searchBooks } from "@/ai/flows/search-books";
 
 
@@ -60,9 +58,9 @@ export default function HomePage() {
     const { firestore, user, isUserLoading } = useFirebase();
     const router = useRouter();
     const [recentlyViewedIds, setRecentlyViewedIds] = useLocalStorage<string[]>('recentlyViewedBookLists', []);
-    const [recommendedBooks, setRecommendedBooks] = useState<Book[]>([]);
-    const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(true);
-    const [recommendationError, setRecommendationError] = useState<string | null>(null);
+    const [featuredBooks, setFeaturedBooks] = useState<Book[]>([]);
+    const [isLoadingFeatured, setIsLoadingFeatured] = useState(true);
+    const [featuredError, setFeaturedError] = useState<string | null>(null);
 
     useEffect(() => {
         if (!isUserLoading && !user) {
@@ -95,49 +93,22 @@ export default function HomePage() {
     
     const isLoadingMyLists = isLoadingMyPrivate || isLoadingMyPublic;
     
-    useEffect(() => {
-        const getRecommendations = async () => {
-            if (isLoadingMyLists || !user) return;
-            setIsLoadingRecommendations(true);
-            setRecommendationError(null);
-            
+     useEffect(() => {
+        const getFeaturedBooks = async () => {
+            setIsLoadingFeatured(true);
+            setFeaturedError(null);
             try {
-                const allMyBooks = (myPrivateLists || []).concat(myPublicLists || []).flatMap(list => list.books || []);
-
-                if (allMyBooks.length > 0) {
-                    const libraryContent = allMyBooks.map(b => `${b.title} by ${b.author}`).join('\n');
-                    const prefs = await summarizeLibrary({ books: libraryContent });
-                    const preferencesText = `Genres: ${prefs.genres.join(', ')}. Themes: ${prefs.themes.join(', ')}. Summary: ${prefs.summary}`;
-
-                    const recommendationsResult = await generateBookRecommendations({ preferences: preferencesText });
-
-                    const parsedTitles = recommendationsResult.recommendations.split('\n\n')
-                        .map(rec => rec.match(/\*\*Title:\*\*\s*(.*)/)?.[1].trim())
-                        .filter(Boolean) as string[];
-
-                    if (parsedTitles.length > 0) {
-                        const searchPromises = parsedTitles.map(title => searchBooks({ query: `title:"${title}"` }));
-                        const searchResults = await Promise.all(searchPromises);
-                        const booksWithDetails = searchResults.map(res => res.books?.[0]).filter(Boolean);
-                        setRecommendedBooks(booksWithDetails.map((b, i) => ({...b, id: i})));
-                    } else {
-                        setRecommendedBooks([]);
-                    }
-                } else {
-                    setRecommendedBooks([]);
-                }
-            } catch (error) {
-                console.error("Failed to get recommendations:", error);
-                setRecommendationError("The recommendation service is temporarily unavailable. Please try again later.");
-                setRecommendedBooks([]);
+                const results = await searchBooks({ query: "", featured: true });
+                setFeaturedBooks(results.books.map((b, i) => ({ ...b, id: i })));
+            } catch (err) {
+                console.error("Failed to fetch featured books:", err);
+                setFeaturedError("Could not load featured books. Please try again later.");
             } finally {
-                setIsLoadingRecommendations(false);
+                setIsLoadingFeatured(false);
             }
         };
-
-        getRecommendations();
-
-    }, [myPublicLists, myPrivateLists, isLoadingMyLists, user]);
+        getFeaturedBooks();
+    }, []);
 
 
     const recentlyViewedLists = useMemo(() => {
@@ -160,8 +131,6 @@ export default function HomePage() {
         );
     }
     
-    const hasPersonalRecommendations = recommendedBooks.length > 0 && myLists.length > 0;
-
     return (
         <div className="flex flex-col min-h-screen bg-background text-foreground">
             <main className="flex-grow container mx-auto p-4 md:p-8 space-y-12 md:space-y-16">
@@ -175,22 +144,22 @@ export default function HomePage() {
                 <section>
                     <div className="flex justify-between items-center mb-6">
                         <h2 className="text-2xl md:text-3xl font-headline flex items-center gap-2">
-                           <Sparkles /> {hasPersonalRecommendations ? "Recommended For You" : "Featured Books"}
+                           <Sparkles /> Featured Books
                         </h2>
                          <Button variant="link" asChild>
                             <Link href="/recommendations">
-                                Get New Recommendations <ArrowRight className="ml-2"/>
+                                Get AI Recommendations <ArrowRight className="ml-2"/>
                             </Link>
                         </Button>
                     </div>
-                    {isLoadingRecommendations ? <BookSectionLoadingSkeleton /> : (
-                        recommendationError ? (
-                            <p className="text-muted-foreground">{recommendationError}</p>
-                        ) : recommendedBooks && recommendedBooks.length > 0 ? (
+                    {isLoadingFeatured ? <BookSectionLoadingSkeleton /> : (
+                        featuredError ? (
+                            <p className="text-muted-foreground">{featuredError}</p>
+                        ) : featuredBooks && featuredBooks.length > 0 ? (
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6">
-                                {recommendedBooks.map((book, i) => <BookCard key={i} book={{...book, listId: 'recommendation', listName: 'Recommendation'}} />)}
+                                {featuredBooks.map((book, i) => <BookCard key={i} book={{...book, listId: 'recommendation', listName: 'Recommendation'}} />)}
                             </div>
-                        ) : <p className="text-muted-foreground">No recommended books available right now.</p>
+                        ) : <p className="text-muted-foreground">No featured books available right now.</p>
                     )}
                 </section>
 
@@ -233,7 +202,3 @@ export default function HomePage() {
         </div>
     );
 }
-
-    
-
-    
