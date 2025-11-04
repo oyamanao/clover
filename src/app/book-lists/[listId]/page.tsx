@@ -340,5 +340,3 @@ export default function BookListPage({ params: paramsPromise }: { params: Promis
         </div>
     );
 }
-
-    
