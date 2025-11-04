@@ -36,8 +36,8 @@ function BookInList({ book }: { book: any }) {
                 </BookDetailsDialog>
                 <p className="text-sm text-muted-foreground">by {book.author}</p>
                 <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2 flex-wrap">
-                    {book.averageRating > 0 && <div className="flex items-center gap-1"><Star className="size-3" /> {book.averageRating.toFixed(1)}</div>}
-                    {book.pageCount > 0 && <div className="flex items-center gap-1"><FileText className="size-3" /> {book.pageCount} pages</div>}
+                    {book.averageRating && book.averageRating > 0 && <div className="flex items-center gap-1"><Star className="size-3" /> {book.averageRating.toFixed(1)}</div>}
+                    {book.pageCount && book.pageCount > 0 && <div className="flex items-center gap-1"><FileText className="size-3" /> {book.pageCount} pages</div>}
                     {book.publisher && <div className="flex items-center gap-1"><Building className="size-3" /> {book.publisher}</div>}
                     {book.language && <div className="flex items-center gap-1"><Globe className="size-3" /> {book.language.toUpperCase()}</div>}
                 </div>
