@@ -3,8 +3,7 @@
 
 import { useMemo, useState, useEffect, use } from 'react';
 import { useFirebase, useMemoFirebase } from '@/firebase';
-import { doc, setDoc, arrayUnion, arrayRemove, addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { useDoc } from '@/firebase';
+import { doc, setDoc, arrayUnion, arrayRemove, addDoc, collection, serverTimestamp, getDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -54,69 +53,96 @@ export default function BookListPage({ params: paramsPromise }: { params: Promis
     const { toast } = useToast();
     const router = useRouter();
     const [recentlyViewed, setRecentlyViewed] = useLocalStorage<string[]>('recentlyViewedBookLists', []);
-
-
-    // To find the booklist, we have to check both public and private collections.
-    const listRef = useMemoFirebase(() => {
-        if (!firestore || !listId) return null;
-        // This is a simplification. We first try public, then private if the user is logged in.
-        // A more robust solution might need a search across collections or a different data model.
-        return doc(firestore, 'public_book_lists', listId);
-    }, [firestore, listId]);
-    
-    // We will attempt to fetch the private doc if the public one fails
-    const privateListRef = useMemoFirebase(() => {
-        if (!firestore || !user || !listId) return null;
-        return doc(firestore, `users/${user.uid}/book_lists`, listId);
-    }, [firestore, user, listId]);
-
-
-    const { data: listData, isLoading: isLoadingPublic, error: publicError } = useDoc(listRef);
-    const { data: privateListData, isLoading: isLoadingPrivate, error: privateError } = useDoc(privateListRef);
     
     const [finalListData, setFinalListData] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isCopying, setIsCopying] = useState(false);
 
-     useEffect(() => {
-        const loadData = async () => {
+    useEffect(() => {
+        if (!firestore || !listId) return;
+
+        let unsubscribe: (() => void) | null = null;
+        let isCancelled = false;
+
+        const fetchData = async () => {
             setIsLoading(true);
-            let dataToShow = null;
+            setFinalListData(null);
 
-            if (listData) {
-                dataToShow = listData;
-            } else if (privateListData) {
-                dataToShow = privateListData;
-            }
+            // 1. Try to get the public document
+            const publicListRef = doc(firestore, 'public_book_lists', listId);
+            
+            try {
+                const publicSnap = await getDoc(publicListRef);
 
-            if (dataToShow?.isPublic) {
-                 setRecentlyViewed(prev => {
-                    const newRecentlyViewed = [listId, ...prev.filter(id => id !== listId)];
-                    return newRecentlyViewed.slice(0, 10); // Keep last 10
-                });
-            }
+                if (publicSnap.exists()) {
+                    if (isCancelled) return;
+                    
+                    const data = { ...publicSnap.data(), id: publicSnap.id };
+                    setFinalListData(data);
+                    
+                    // If it's public, add to recently viewed
+                     if (data.isPublic) {
+                        setRecentlyViewed(prev => {
+                            const newRecentlyViewed = [listId, ...prev.filter(id => id !== listId)];
+                            return newRecentlyViewed.slice(0, 10);
+                        });
+                    }
 
-            // If there's an error on the public fetch but we found a private list, ignore the public error.
-            if (publicError && !privateListData) {
-                 const permissionError = new FirestorePermissionError({
-                    path: `public_book_lists/${listId}`,
+                    // Subscribe to real-time updates for this public doc
+                    unsubscribe = onSnapshot(publicListRef, (snapshot) => {
+                        if (snapshot.exists()) {
+                            setFinalListData({ ...snapshot.data(), id: snapshot.id });
+                        } else {
+                            setFinalListData(null); // It might have been deleted
+                        }
+                    });
+
+                } else {
+                    // 2. If public doc doesn't exist and user is logged in, try private
+                    if (user) {
+                        const privateListRef = doc(firestore, `users/${user.uid}/book_lists`, listId);
+                        const privateSnap = await getDoc(privateListRef);
+
+                        if (privateSnap.exists()) {
+                           if (isCancelled) return;
+                           
+                           setFinalListData({ ...privateSnap.data(), id: privateSnap.id });
+                           
+                           // Subscribe to real-time updates for this private doc
+                           unsubscribe = onSnapshot(privateListRef, (snapshot) => {
+                               if (snapshot.exists()) {
+                                   setFinalListData({ ...snapshot.data(), id: snapshot.id });
+                               } else {
+                                   setFinalListData(null);
+                               }
+                           });
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error("Error fetching book list:", error);
+                const permissionError = new FirestorePermissionError({
+                    path: `public_book_lists/${listId}`, // Assume public path for error
                     operation: 'get',
                 });
                 errorEmitter.emit('permission-error', permissionError);
-            }
-
-            if (dataToShow) {
-                setFinalListData(dataToShow);
-            }
-            // Only set loading to false when both have finished
-            if (!isLoadingPublic && !isLoadingPrivate) {
-                setIsLoading(false);
+            } finally {
+                if (!isCancelled) {
+                    setIsLoading(false);
+                }
             }
         };
 
-        loadData();
-    }, [listData, privateListData, isLoadingPublic, isLoadingPrivate, publicError, listId, setRecentlyViewed]);
-    
+        fetchData();
+
+        return () => {
+            isCancelled = true;
+            if (unsubscribe) {
+                unsubscribe();
+            }
+        };
+    }, [firestore, listId, user, setRecentlyViewed]);
+
     const isOwner = user && finalListData && user.uid === finalListData.userId;
     const hasLiked = user && finalListData?.likedBy?.includes(user.uid);
 
@@ -314,3 +340,5 @@ export default function BookListPage({ params: paramsPromise }: { params: Promis
         </div>
     );
 }
+
+    
