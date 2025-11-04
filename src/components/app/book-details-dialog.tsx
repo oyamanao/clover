@@ -11,7 +11,7 @@ import Link from "next/link";
 
 export function BookDetailsDialog({ book, children }: { book: Book | BookWithListContext, children: React.ReactNode }) {
     
-    const isBookWithContext = 'listId' in book;
+    const isBookWithContext = 'listId' in book && book.listId !== 'recommendation';
 
     return (
         <Dialog>
@@ -44,7 +44,7 @@ export function BookDetailsDialog({ book, children }: { book: Book | BookWithLis
                         
                         <p className="mt-4 text-foreground/80 max-h-48 overflow-y-auto">{book.description}</p>
                         
-                        {isBookWithContext && book.listId !== 'recommendation' && (
+                        {isBookWithContext && book.listId && (
                             <Button asChild className="mt-4">
                                 <Link href={`/book-lists/${book.listId}`}>View List: {book.listName}</Link>
                             </Button>

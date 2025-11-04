@@ -27,19 +27,9 @@ export function BookCard({ book }: { book: Book | BookWithListContext }) {
       </Card>
   );
 
-  // If it's a recommendation or doesn't have a listId, open a dialog.
-  if (!('listId' in book) || book.listId === 'recommendation') {
-    return (
-        <BookDetailsDialog book={book}>
-            <div className="block group cursor-pointer">{cardContent}</div>
-        </BookDetailsDialog>
-    );
-  }
-  
-  // Otherwise, link to the book list it belongs to.
   return (
-    <Link href={`/book-lists/${book.listId}`} className="block group">
-      {cardContent}
-    </Link>
+      <BookDetailsDialog book={book}>
+          <div className="block group cursor-pointer h-full">{cardContent}</div>
+      </BookDetailsDialog>
   );
 }
